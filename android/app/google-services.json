@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "96304314724",
+    "project_id": "flutter-fire-pos",
+    "storage_bucket": "flutter-fire-pos.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:96304314724:android:016d875441aee1d3fea271",
+        "android_client_info": {
+          "package_name": "com.example.flutter_fire_pos"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "96304314724-es26ne5cj8rd4hfp276qu9kvsjn7b2ht.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIHK0qj1jGEQRgM6zgtL5tPAcydAH_r2c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "96304314724-es26ne5cj8rd4hfp276qu9kvsjn7b2ht.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
