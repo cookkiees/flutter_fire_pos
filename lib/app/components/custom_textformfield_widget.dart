@@ -14,7 +14,9 @@ class CustomTextFormFieldWidget extends StatelessWidget {
     this.suffixIcon,
     this.onTap,
     this.onChanged,
+    this.styleColor = MyColors.primary,
   });
+  final Color styleColor;
   final String labelText;
   final List<TextInputFormatter>? inputFormatters;
   final TextEditingController? controller;
@@ -30,27 +32,27 @@ class CustomTextFormFieldWidget extends StatelessWidget {
       onChanged: onChanged,
       controller: controller,
       inputFormatters: inputFormatters,
-      cursorColor: MyColors.primary,
-      style: MyTextTheme.defaultStyle(color: Colors.black),
+      cursorColor: styleColor,
+      style: MyTextTheme.defaultStyle(color: styleColor),
       decoration: InputDecoration(
         labelText: labelText,
         errorText: errorText,
         suffixIcon: suffixIcon,
         errorStyle: MyTextTheme.defaultStyle(color: Colors.red),
         fillColor: MyColors.primary,
-        labelStyle: MyTextTheme.defaultStyle(color: Colors.black),
-        enabledBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: MyColors.primary),
+        labelStyle: MyTextTheme.defaultStyle(color: styleColor),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: styleColor),
         ),
-        errorBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: MyColors.primary),
+        errorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: styleColor),
         ),
-        focusedErrorBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: MyColors.primary),
+        focusedErrorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: styleColor),
         ),
-        focusColor: MyColors.primary,
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: MyColors.primary),
+        focusColor: styleColor,
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: styleColor),
         ),
       ),
     );

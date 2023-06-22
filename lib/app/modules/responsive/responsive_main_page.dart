@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_fire_pos/app/data/providers/product_provider.dart';
 import 'package:provider/provider.dart';
 
-import '../../../responsive_layout.dart';
+import 'responsive_layout.dart';
 import '../../components/custom_search_widget.dart';
 import '../../theme/text_theme.dart';
 import '../../theme/utils/my_colors.dart';
@@ -18,7 +17,6 @@ class ResponsiveMainPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ResponsiveMainProvider>();
-    final productProvider = context.watch<ProductProvider>();
 
     return Scaffold(
       backgroundColor: MyColors.primary,
@@ -77,11 +75,9 @@ class ResponsiveMainPage extends StatelessWidget {
                         child: IndexedStack(
                           index: controller.tabIndex,
                           children: [
-                            Container(color: Colors.blue),
-                            Container(color: Colors.amber),
                             const MenuPage(),
-                            Container(color: Colors.green),
-                            Container(color: Colors.white),
+                            Container(),
+                            Container(),
                           ],
                         ),
                       )

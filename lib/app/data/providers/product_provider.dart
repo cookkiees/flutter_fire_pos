@@ -6,9 +6,8 @@ import '../../data/model/product_model.dart';
 
 class ProductProvider extends ChangeNotifier {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
-  final CollectionReference _productsCollection =
-      FirebaseFirestore.instance.collection('products');
-  final CollectionReference _categoriesCollection =
+  final _productsCollection = FirebaseFirestore.instance.collection('products');
+  final _categoriesCollection =
       FirebaseFirestore.instance.collection('categories');
   final nameController = TextEditingController();
   final categoryController = TextEditingController();
@@ -18,9 +17,7 @@ class ProductProvider extends ChangeNotifier {
 
   Stream<List<Product>> getProductStream() {
     return _productsCollection.snapshots().map((snapshot) {
-      return snapshot.docs
-          .map((doc) => Product.fromJson(doc.data() as Map<String, dynamic>))
-          .toList();
+      return snapshot.docs.map((doc) => Product.fromJson(doc.data())).toList();
     });
   }
 
@@ -111,18 +108,37 @@ class ProductProvider extends ChangeNotifier {
         return;
       }
 
-      Get.back();
-      resetFields();
       final QuerySnapshot snapshot = await _productsCollection.get();
-      final productIds = snapshot.docs.length;
-      final id = productIds + 1;
+      final categoryDocs = snapshot.docs;
+
+      int maxId = 0;
+      for (var doc in categoryDocs) {
+        final id = int.tryParse(doc['id']);
+        if (id != null && id > maxId) {
+          maxId = id;
+        }
+      }
+      final newId = (maxId + 1).toString();
 
       final DocumentReference documentReference =
-          _productsCollection.doc('$id');
-
+          _productsCollection.doc(newId);
       await documentReference.set(product.toJson());
-      await documentReference.update({'id': '$id'});
+      await documentReference.update({'id': newId});
+      final Product newProduct = Product(
+        id: newId,
+        name: nameController.text,
+        category: category,
+        stock: int.tryParse(stockController.text) ?? 0,
+        sellingPrice: int.tryParse(sellingController.text) ?? 0,
+        basicPrice: int.tryParse(basicController.text) ?? 0,
+      );
+
+      _products.add(newProduct);
+
       getFilteredProducts();
+      resetFields();
+
+      Get.back();
     } catch (error) {
       // Handle error
       debugPrint('Error adding product: $error');
@@ -227,14 +243,24 @@ class ProductProvider extends ChangeNotifier {
 
     try {
       final QuerySnapshot snapshot = await _categoriesCollection.get();
-      final categoryIds = snapshot.docs.length;
-      final id = categoryIds + 1;
-      final categoryDocument = _categoriesCollection.doc('$id');
+      final categoryDocs = snapshot.docs;
+
+      int maxId = 0;
+      for (var doc in categoryDocs) {
+        final id = int.tryParse(doc['id']);
+        if (id != null && id > maxId) {
+          maxId = id;
+        }
+      }
+      final newId = (maxId + 1).toString();
+
+      final categoryDocument = _categoriesCollection.doc(newId);
 
       await categoryDocument.set({
         'categoryName': categoryName,
-        'id': '$id',
+        'id': newId,
       });
+
       getFilteredProducts();
       _categories.add(categoryName);
       notifyListeners();

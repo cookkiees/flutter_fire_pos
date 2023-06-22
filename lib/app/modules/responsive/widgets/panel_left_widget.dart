@@ -24,15 +24,13 @@ class PanelLeftWidget extends StatelessWidget {
               height: 100,
               alignment: Alignment.center,
               child: Text(
-                '🔥.🔥',
+                '🔥',
                 style: MyTextTheme.defaultStyle(
                   fontSize: 32,
                 ),
               ),
             ),
             ...[
-              "Reservation",
-              "Table Services",
               "Menu",
               "Delivery",
               "Accounting",

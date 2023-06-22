@@ -3,6 +3,7 @@ import 'package:flutter_fire_pos/app/theme/text_theme.dart';
 import 'package:flutter_fire_pos/app/theme/utils/my_colors.dart';
 import 'package:provider/provider.dart';
 
+import '../../../components/custom_elevated_button_widget.dart';
 import '../../../data/providers/card_provider.dart';
 
 class PanelRightWidget extends StatelessWidget {
@@ -23,48 +24,15 @@ class PanelRightWidget extends StatelessWidget {
           Container(
             height: 100,
           ),
-          Flexible(
-              child: ListView.builder(
-            itemCount: cartProvider.cartItems.length,
-            itemBuilder: (context, index) {
-              final product = cartProvider.cartItems[index];
-
-              if (cartProvider.cartItems.isNotEmpty) {
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: MyColors.secondary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ListTile(
-                    title: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "${product.name} ",
-                          style: MyTextTheme.defaultStyle(),
-                        ),
-                        Text(
-                          "x ${product.quantity}",
-                          style: MyTextTheme.defaultStyle(
-                            color: Colors.grey,
-                          ),
-                        )
-                      ],
-                    ),
-                    trailing: Text(
-                      "\$ ${product.sellingPrice}",
-                      style: MyTextTheme.defaultStyle(),
-                    ),
-                  ),
-                );
-              } else {
-                return const Text('data');
-              }
-            },
-          )),
+          if (cartProvider.cartItems.isEmpty)
+            Flexible(
+                child: Center(
+              child: Text("", style: MyTextTheme.defaultStyle()),
+            ))
+          else
+            AnimatedCartList(cartProvider: cartProvider),
           const SizedBox(height: 16),
-          Flexible(
+          Expanded(
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -75,48 +43,151 @@ class PanelRightWidget extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Column(
+                  Column(
                     children: [
                       CustomListTileWidget(
                         title: 'Subtotal',
-                        trailing: '\$ 0.0',
+                        trailing:
+                            '\$ ${cartProvider.getSubtotal().toStringAsFixed(2)}',
                       ),
                       CustomListTileWidget(
                         title: 'Discount',
-                        trailing: '\$ 0.0',
+                        trailing:
+                            '\$ ${(cartProvider.getSubtotal() * 0).toStringAsFixed(2)}',
                       ),
                       CustomListTileWidget(
                         title: 'Tax 10%',
-                        trailing: '\$ 0.0',
+                        trailing:
+                            '\$ ${(cartProvider.getSubtotal() * 0.1).toStringAsFixed(2)}',
                       ),
-                      Divider(color: Colors.grey),
+                      const Divider(color: Colors.grey),
                       CustomListTileWidget(
                         title: 'Total',
-                        trailing: '\$ 0.0',
+                        trailing:
+                            '\$ ${cartProvider.getTotalPrice().toStringAsFixed(2)}',
                         titleFontSize: 18,
                         trailingFontSize: 18,
                       ),
                     ],
                   ),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[200],
-                      minimumSize: const Size(double.infinity, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                    ),
-                    child: Text(
-                      'Place Order',
-                      style: MyTextTheme.defaultStyle(color: Colors.black),
-                    ),
+                  CustomElevatedButtonWidget(
+                    title: 'Place order',
+                    onPressed: () => cartProvider.checkout(),
                   )
                 ],
               ),
             ),
           )
         ],
+      ),
+    );
+  }
+}
+
+class AnimatedCartList extends StatefulWidget {
+  const AnimatedCartList({
+    Key? key,
+    required this.cartProvider,
+  }) : super(key: key);
+
+  final CartProvider cartProvider;
+
+  @override
+  AnimatedCartListState createState() => AnimatedCartListState();
+}
+
+class AnimatedCartListState extends State<AnimatedCartList>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant AnimatedCartList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.cartProvider.cartItems.length >
+        oldWidget.cartProvider.cartItems.length) {
+      _animationController.forward();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Flexible(
+      fit: FlexFit.tight,
+      child: ListView.builder(
+        itemCount: widget.cartProvider.cartItems.length,
+        itemBuilder: (context, index) {
+          final product = widget.cartProvider.cartItems[index];
+
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(1, 0),
+              end: Offset.zero,
+            ).animate(_animationController),
+            child: GestureDetector(
+              key: ValueKey(product.id), // Key unik untuk AnimatedSwitcher
+              onTap: () {
+                // Menghapus item dari cartProvider
+                widget.cartProvider.decrementFromCart("${product.id}");
+                _animationController.reverse();
+              },
+              child: Container(
+                key: ValueKey(product.id), // Key unik untuk AnimatedSwitcher
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: MyColors.secondary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.white,
+                    radius: 12,
+                    child: Text(
+                      "${index + 1}",
+                      style: MyTextTheme.defaultStyle(
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  title: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        "${product.name} ",
+                        style: MyTextTheme.defaultStyle(),
+                      ),
+                      Text(
+                        "x ${product.quantity}",
+                        style: MyTextTheme.defaultStyle(
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  trailing: Text(
+                    "\$ ${product.sellingPrice}",
+                    style: MyTextTheme.defaultStyle(),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -99,7 +99,6 @@ class MenuPage extends StatelessWidget {
                   ),
                 ),
               const Flexible(child: Divider(color: Colors.grey, height: 50)),
-
               AnimationLimiter(
                 child: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -115,6 +114,7 @@ class MenuPage extends StatelessWidget {
                     final product = productProvider.filteredProducts[index];
                     final quantity =
                         cartProvider.getQuantityInCart("${product.id}");
+
                     return AnimationConfiguration.staggeredGrid(
                       position: index,
                       duration: const Duration(milliseconds: 500),
@@ -123,70 +123,18 @@ class MenuPage extends StatelessWidget {
                         child: CardProductWidget(
                           quantity: quantity,
                           product: product,
-                          increment: () =>
-                              cartProvider.addToCart("${product.id}"),
+                          increment: () {
+                            cartProvider.addToCart("${product.id}");
+                          },
+                          decrement: () {
+                            cartProvider.decrementFromCart("${product.id}");
+                          },
                         ),
                       ),
                     );
                   },
                 ),
               ),
-              // StreamBuilder<List<Product>>(
-              //   stream: productProvider.getProductStream(),
-              //   builder: (context, snapshot) {
-              //     final products = snapshot.data;
-              //     if (snapshot.connectionState == ConnectionState.waiting) {
-              //       return const SizedBox.shrink();
-              //     } else if (snapshot.hasError) {
-              //       return Text('Error: ${snapshot.error}');
-              //     } else if (products != null && products.isNotEmpty) {
-              //       // Filter produk berdasarkan kategori yang dipilih
-              //       final selectedCategory = productProvider.selectedCategory;
-              //       final filteredProducts = selectedCategory != null
-              //           ? products
-              //               .where(
-              //                 (product) => product.category == selectedCategory,
-              //               )
-              //               .toList()
-              //           : products;
-
-              //       return AnimationLimiter(
-              //         child: GridView.builder(
-              //           gridDelegate:
-              //               const SliverGridDelegateWithMaxCrossAxisExtent(
-              //             maxCrossAxisExtent: 200,
-              //             mainAxisExtent: 150,
-              //             mainAxisSpacing: 16,
-              //             crossAxisSpacing: 16,
-              //           ),
-              //           itemCount: filteredProducts.length,
-              //           shrinkWrap: true,
-              //           physics: const NeverScrollableScrollPhysics(),
-              //           itemBuilder: (BuildContext context, int index) {
-              //             final product = filteredProducts[index];
-              //             final quantity =
-              //                 cartProvider.getQuantityInCart("${product.id}");
-              //             return AnimationConfiguration.staggeredGrid(
-              //               position: index,
-              //               duration: const Duration(milliseconds: 500),
-              //               columnCount: 2,
-              //               child: ScaleAnimation(
-              //                 child: CardProductWidget(
-              //                   quantity: quantity,
-              //                   product: product,
-              //                   increment: () =>
-              //                       cartProvider.addToCart("${product.id}"),
-              //                 ),
-              //               ),
-              //             );
-              //           },
-              //         ),
-              //       );
-              //     } else {
-              //       return const SizedBox();
-              //     }
-              //   },
-              // ),
             ],
           ),
         ),
@@ -195,19 +143,57 @@ class MenuPage extends StatelessWidget {
   }
 }
 
-class CardProductWidget extends StatelessWidget {
+class CardProductWidget extends StatefulWidget {
   const CardProductWidget({
     super.key,
     required this.product,
     this.increment,
     required this.quantity,
+    this.decrement,
   });
   final int quantity;
   final Product product;
   final void Function()? increment;
+  final void Function()? decrement;
+
+  @override
+  State<CardProductWidget> createState() => _CardProductWidgetState();
+}
+
+class _CardProductWidgetState extends State<CardProductWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController animationController;
+  late Animation<double> widthAnimation;
+  late Animation<Offset> slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    widthAnimation = Tween<double>(
+      begin: 10,
+      end: 200,
+    ).animate(animationController);
+  }
+
+  @override
+  void dispose() {
+    animationController.dispose();
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.quantity >= 1) {
+      animationController.forward();
+    } else if (widget.quantity <= 0) {
+      animationController.reverse();
+    }
+
     return Stack(
       children: [
         Container(
@@ -215,6 +201,32 @@ class CardProductWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           decoration: BoxDecoration(
             color: MyColors.secondary,
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        AnimatedBuilder(
+          animation: animationController,
+          builder: (context, chlid) {
+            return Container(
+              width: widthAnimation.value,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.green[200],
+                borderRadius: animationController.value >= 0.1
+                    ? BorderRadius.circular(12)
+                    : const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        bottomLeft: Radius.circular(12),
+                      ),
+              ),
+            );
+          },
+        ),
+        Container(
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -225,20 +237,40 @@ class CardProductWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    product.name,
+                    widget.product.name,
                     style: MyTextTheme.defaultStyle(
                       fontSize: 18,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
+                      color: widget.quantity == 0
+                          ? Colors.white
+                          : MyColors.primary,
+                      fontWeight: widget.quantity == 0
+                          ? FontWeight.w500
+                          : FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "\$${product.sellingPrice}",
+                    "\$${widget.product.sellingPrice}",
                     style: MyTextTheme.defaultStyle(
                       fontSize: 16,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w800,
+                      color:
+                          widget.quantity == 0 ? Colors.grey : MyColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.product.stock == 0
+                        ? "Not available"
+                        : "${widget.product.stock} avalaible",
+                    style: MyTextTheme.defaultStyle(
+                      fontSize: 12,
+                      color: widget.product.stock == 0
+                          ? Colors.red
+                          : widget.quantity == 0
+                              ? Colors.grey
+                              : MyColors.primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -249,38 +281,56 @@ class CardProductWidget extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.white),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Icon(
-                        Icons.remove,
-                        size: 24.0,
-                        color: Colors.white,
+                    InkWell(
+                      onTap: widget.decrement,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                              color: widget.quantity == 0
+                                  ? Colors.white
+                                  : MyColors.primary),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(
+                          Icons.remove,
+                          size: 24.0,
+                          color: widget.quantity == 0
+                              ? Colors.white
+                              : MyColors.primary,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '$quantity',
+                      '${widget.quantity}',
                       style: MyTextTheme.defaultStyle(
                         fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w400,
+                        color: widget.quantity == 0
+                            ? Colors.white
+                            : MyColors.primary,
+                        fontWeight: widget.quantity == 0
+                            ? FontWeight.w500
+                            : FontWeight.w700,
                       ),
                     ),
                     const SizedBox(width: 8),
                     InkWell(
-                      onTap: increment,
+                      onTap: widget.increment,
                       child: Container(
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white),
+                          border: Border.all(
+                            color: widget.quantity == 0
+                                ? Colors.white
+                                : MyColors.primary,
+                          ),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.add,
                           size: 24.0,
-                          color: Colors.white,
+                          color: widget.quantity == 0
+                              ? Colors.white
+                              : MyColors.primary,
                         ),
                       ),
                     ),
@@ -288,17 +338,6 @@ class CardProductWidget extends StatelessWidget {
                 ),
               )
             ],
-          ),
-        ),
-        Container(
-          width: 8,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.green[200],
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12),
-              bottomLeft: Radius.circular(12),
-            ),
           ),
         ),
       ],
