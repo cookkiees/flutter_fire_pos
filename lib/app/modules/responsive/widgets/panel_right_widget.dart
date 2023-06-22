@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_pos/app/theme/text_theme.dart';
 import 'package:flutter_fire_pos/app/theme/utils/my_colors.dart';
+import 'package:provider/provider.dart';
+
+import '../../../data/providers/card_provider.dart';
 
 class PanelRightWidget extends StatelessWidget {
   const PanelRightWidget({
@@ -9,6 +12,8 @@ class PanelRightWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cartProvider = context.watch<CartProvider>();
+
     return SizedBox(
       width: 360,
       height: double.infinity,
@@ -18,7 +23,46 @@ class PanelRightWidget extends StatelessWidget {
           Container(
             height: 100,
           ),
-          Flexible(child: Container()),
+          Flexible(
+              child: ListView.builder(
+            itemCount: cartProvider.cartItems.length,
+            itemBuilder: (context, index) {
+              final product = cartProvider.cartItems[index];
+
+              if (cartProvider.cartItems.isNotEmpty) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: MyColors.secondary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListTile(
+                    title: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "${product.name} ",
+                          style: MyTextTheme.defaultStyle(),
+                        ),
+                        Text(
+                          "x ${product.quantity}",
+                          style: MyTextTheme.defaultStyle(
+                            color: Colors.grey,
+                          ),
+                        )
+                      ],
+                    ),
+                    trailing: Text(
+                      "\$ ${product.sellingPrice}",
+                      style: MyTextTheme.defaultStyle(),
+                    ),
+                  ),
+                );
+              } else {
+                return const Text('data');
+              }
+            },
+          )),
           const SizedBox(height: 16),
           Flexible(
             child: Container(

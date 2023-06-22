@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../data/model/product_model.dart';
 
 class ProductProvider extends ChangeNotifier {
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final CollectionReference _productsCollection =
       FirebaseFirestore.instance.collection('products');
   final CollectionReference _categoriesCollection =
@@ -17,17 +18,6 @@ class ProductProvider extends ChangeNotifier {
 
   Stream<List<Product>> getProductStream() {
     return _productsCollection.snapshots().map((snapshot) {
-      return snapshot.docs
-          .map((doc) => Product.fromJson(doc.data() as Map<String, dynamic>))
-          .toList();
-    });
-  }
-
-  Stream<List<Product>> getProductsByCategoryStream(String category) {
-    return _productsCollection
-        .where('category', isEqualTo: category)
-        .snapshots()
-        .map((snapshot) {
       return snapshot.docs
           .map((doc) => Product.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
@@ -120,6 +110,7 @@ class ProductProvider extends ChangeNotifier {
         notifyListeners();
         return;
       }
+
       Get.back();
       resetFields();
       final QuerySnapshot snapshot = await _productsCollection.get();
@@ -130,29 +121,12 @@ class ProductProvider extends ChangeNotifier {
           _productsCollection.doc('$id');
 
       await documentReference.set(product.toJson());
-
       await documentReference.update({'id': '$id'});
+      getFilteredProducts();
     } catch (error) {
       // Handle error
       debugPrint('Error adding product: $error');
     }
-  }
-
-  Stream<List<String>> getCategoriesStream() {
-    return _categoriesCollection.snapshots().map((snapshot) {
-      return snapshot.docs
-          .map((doc) => doc.data() as Map<String, dynamic>?)
-          .where((data) => data != null && data.containsKey('categoryName'))
-          .map((data) => data!['categoryName'] as String)
-          .toList();
-    });
-  }
-
-  String? selectedCategory;
-
-  void updateSelectedCategory(String category) {
-    selectedCategory = category;
-    notifyListeners();
   }
 
   final List<String> _categories = [];
@@ -180,6 +154,69 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
+  int getProductCountByCategory(String category) {
+    if (selectedCategory == category) {
+      return filteredProducts.length;
+    } else {
+      return _products.where((product) => product.category == category).length;
+    }
+  }
+
+  String? selectedCategory;
+
+  void updateSelectedCategory(String category) {
+    selectedCategory = category;
+    getFilteredProducts();
+    notifyListeners();
+  }
+
+  List<Product> filteredProducts = [];
+
+  List<Product> getFilteredProducts() {
+    if (selectedCategory != null) {
+      filteredProducts = products
+          .where((product) => product.category == selectedCategory)
+          .toList();
+      return filteredProducts;
+    } else {
+      return filteredProducts = products;
+    }
+  }
+
+  final List<Product> _products = [];
+  List<Product> get products => _products;
+
+  Future<List<Product>> getProducts() async {
+    try {
+      final QuerySnapshot snapshot = await _productsCollection.get();
+      final List<Product> newProducts = snapshot.docs
+          .map((doc) => doc.data() as Map<String, dynamic>?)
+          .where((data) => data != null && data.containsKey('id'))
+          .map((data) => Product(
+                id: data!['id'] as String?,
+                name: data['name'] as String,
+                category: data['category'] as String,
+                stock: data['stock'] as int,
+                sellingPrice: data['sellingPrice'] as int,
+                basicPrice: data['basicPrice'] as int,
+                quantity: data['quantity'] as int? ?? 0,
+              ))
+          .toList();
+
+      _products.clear();
+      _products.addAll(newProducts);
+      getFilteredProducts();
+
+      notifyListeners();
+
+      return _products;
+    } catch (error) {
+      // Handle error
+      debugPrint('Error getting categories: $error');
+      return [];
+    }
+  }
+
   Future<void> addCategory(String categoryName) async {
     _errorCategories = '';
     if (categoryName.isEmpty) {
@@ -198,6 +235,7 @@ class ProductProvider extends ChangeNotifier {
         'categoryName': categoryName,
         'id': '$id',
       });
+      getFilteredProducts();
       _categories.add(categoryName);
       notifyListeners();
     } catch (error) {

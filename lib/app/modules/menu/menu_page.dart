@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_pos/app/data/providers/card_provider.dart';
 import 'package:flutter_fire_pos/app/theme/utils/my_colors.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +16,7 @@ class MenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final productProvider = context.watch<ProductProvider>();
+    final cartProvider = context.watch<CartProvider>();
 
     return ChangeNotifierProvider(
       create: (context) => productProvider,
@@ -80,7 +82,7 @@ class MenuPage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    '1 Items',
+                                    '${productProvider.getProductCountByCategory(category)} Items',
                                     style: MyTextTheme.defaultStyle(
                                       fontSize: 14,
                                       color: MyColors.secondary,
@@ -97,58 +99,94 @@ class MenuPage extends StatelessWidget {
                   ),
                 ),
               const Flexible(child: Divider(color: Colors.grey, height: 50)),
-              StreamBuilder<List<Product>>(
-                stream: productProvider.getProductStream(),
-                builder: (context, snapshot) {
-                  final products = snapshot.data;
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const SizedBox.shrink();
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else if (products != null && products.isNotEmpty) {
-                    // Filter produk berdasarkan kategori yang dipilih
-                    final selectedCategory = productProvider.selectedCategory;
-                    final filteredProducts = selectedCategory != null
-                        ? products
-                            .where(
-                              (product) => product.category == selectedCategory,
-                            )
-                            .toList()
-                        : products;
 
-                    return AnimationLimiter(
-                      child: GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 200,
-                          mainAxisExtent: 150,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
+              AnimationLimiter(
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 200,
+                    mainAxisExtent: 150,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                  ),
+                  itemCount: productProvider.filteredProducts.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemBuilder: (BuildContext context, int index) {
+                    final product = productProvider.filteredProducts[index];
+                    final quantity =
+                        cartProvider.getQuantityInCart("${product.id}");
+                    return AnimationConfiguration.staggeredGrid(
+                      position: index,
+                      duration: const Duration(milliseconds: 500),
+                      columnCount: 2,
+                      child: ScaleAnimation(
+                        child: CardProductWidget(
+                          quantity: quantity,
+                          product: product,
+                          increment: () =>
+                              cartProvider.addToCart("${product.id}"),
                         ),
-                        itemCount: filteredProducts.length,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder: (BuildContext context, int index) {
-                          final product = filteredProducts[index];
-                          return AnimationConfiguration.staggeredGrid(
-                            position: index,
-                            duration: const Duration(milliseconds: 500),
-                            columnCount: 2,
-                            child: ScaleAnimation(
-                              child: CardProductWidget(
-                                quantity: product.quantity,
-                                product: product,
-                              ),
-                            ),
-                          );
-                        },
                       ),
                     );
-                  } else {
-                    return const SizedBox();
-                  }
-                },
+                  },
+                ),
               ),
+              // StreamBuilder<List<Product>>(
+              //   stream: productProvider.getProductStream(),
+              //   builder: (context, snapshot) {
+              //     final products = snapshot.data;
+              //     if (snapshot.connectionState == ConnectionState.waiting) {
+              //       return const SizedBox.shrink();
+              //     } else if (snapshot.hasError) {
+              //       return Text('Error: ${snapshot.error}');
+              //     } else if (products != null && products.isNotEmpty) {
+              //       // Filter produk berdasarkan kategori yang dipilih
+              //       final selectedCategory = productProvider.selectedCategory;
+              //       final filteredProducts = selectedCategory != null
+              //           ? products
+              //               .where(
+              //                 (product) => product.category == selectedCategory,
+              //               )
+              //               .toList()
+              //           : products;
+
+              //       return AnimationLimiter(
+              //         child: GridView.builder(
+              //           gridDelegate:
+              //               const SliverGridDelegateWithMaxCrossAxisExtent(
+              //             maxCrossAxisExtent: 200,
+              //             mainAxisExtent: 150,
+              //             mainAxisSpacing: 16,
+              //             crossAxisSpacing: 16,
+              //           ),
+              //           itemCount: filteredProducts.length,
+              //           shrinkWrap: true,
+              //           physics: const NeverScrollableScrollPhysics(),
+              //           itemBuilder: (BuildContext context, int index) {
+              //             final product = filteredProducts[index];
+              //             final quantity =
+              //                 cartProvider.getQuantityInCart("${product.id}");
+              //             return AnimationConfiguration.staggeredGrid(
+              //               position: index,
+              //               duration: const Duration(milliseconds: 500),
+              //               columnCount: 2,
+              //               child: ScaleAnimation(
+              //                 child: CardProductWidget(
+              //                   quantity: quantity,
+              //                   product: product,
+              //                   increment: () =>
+              //                       cartProvider.addToCart("${product.id}"),
+              //                 ),
+              //               ),
+              //             );
+              //           },
+              //         ),
+              //       );
+              //     } else {
+              //       return const SizedBox();
+              //     }
+              //   },
+              // ),
             ],
           ),
         ),

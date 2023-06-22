@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_pos/app/data/providers/product_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../../responsive_layout.dart';
@@ -17,6 +18,7 @@ class ResponsiveMainPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ResponsiveMainProvider>();
+    final productProvider = context.watch<ProductProvider>();
 
     return Scaffold(
       backgroundColor: MyColors.primary,

@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_pos/app/data/providers/card_provider.dart';
 import 'package:flutter_fire_pos/app/modules/responsive/responsive_main_provider.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -16,7 +17,31 @@ void main() async {
   );
   debugPrint("connected");
 
-  runApp(const MyApp());
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider<ResponsiveMainProvider>(
+        lazy: false,
+        create: (context) => ResponsiveMainProvider(),
+      ),
+      ChangeNotifierProvider<CartProvider>(
+          lazy: false,
+          create: (context) {
+            final provider = CartProvider();
+            provider.fetchCartItems();
+            return provider;
+          }),
+      ChangeNotifierProvider<ProductProvider>(
+          lazy: false,
+          create: (context) {
+            final provider = ProductProvider();
+            provider.getCategories();
+            provider.getProducts();
+
+            return provider;
+          }),
+    ],
+    child: const MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
@@ -24,27 +49,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<ResponsiveMainProvider>(
-          lazy: false,
-          create: (context) => ResponsiveMainProvider(),
-        ),
-        ChangeNotifierProvider<ProductProvider>(
-            lazy: false,
-            create: (context) {
-              final provider = ProductProvider();
-              provider.getCategories();
-              return provider;
-            }),
-      ],
-      child: GetMaterialApp(
-        debugShowCheckedModeBanner: false,
-        initialRoute: AppRoutes.initial,
-        defaultTransition: Transition.fade,
-        initialBinding: ApiServiceBinding(),
-        getPages: AppPages.pages,
-      ),
+    return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
+      initialRoute: AppRoutes.initial,
+      defaultTransition: Transition.fade,
+      initialBinding: ApiServiceBinding(),
+      getPages: AppPages.pages,
     );
   }
 }
