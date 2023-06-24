@@ -61,7 +61,7 @@ class AuthenticationPage extends StatelessWidget {
                     labelText: 'Password',
                     styleColor: Colors.white,
                     errorText: authProvider.errorPasword,
-                    controller: authProvider.emailController,
+                    controller: authProvider.passwordController,
                     // errorText: '',
                   ),
                   const SizedBox(height: 36),
@@ -70,6 +70,25 @@ class AuthenticationPage extends StatelessWidget {
                     radius: 4,
                     onPressed: () => authProvider.loginWithEmailPassword(),
                   ),
+                  const SizedBox(height: 36),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 40,
+                    child: ElevatedButton.icon(
+                      onPressed: () => authProvider.loginWithGoogle(),
+                      icon: const Icon(Icons.apple),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: MyColors.purple,
+                      ),
+                      label: Text(
+                        'Sign in with Google',
+                        style: MyTextTheme.defaultStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  )
                 ],
               ),
             )

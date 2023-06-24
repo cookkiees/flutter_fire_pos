@@ -6,8 +6,8 @@ import '../../../components/custom_textformfield_widget.dart';
 import '../../../data/providers/product_provider.dart';
 import '../../../theme/text_theme.dart';
 
-class AddNewMenuWidget extends StatelessWidget {
-  const AddNewMenuWidget({
+class AddProductWidget extends StatelessWidget {
+  const AddProductWidget({
     Key? key,
   }) : super(key: key);
 
@@ -134,6 +134,7 @@ class AddNewMenuWidget extends StatelessWidget {
                         labelText: 'Basic Price',
                         controller: productProvider.basicController,
                         errorText: productProvider.errorBasicPrice,
+                        onChanged: (value) {},
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
@@ -146,6 +147,7 @@ class AddNewMenuWidget extends StatelessWidget {
                         labelText: 'Selling Price',
                         controller: productProvider.sellingController,
                         errorText: productProvider.errorSellingPrice,
+                        onChanged: (value) {},
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],

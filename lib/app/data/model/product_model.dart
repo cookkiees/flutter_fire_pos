@@ -40,4 +40,23 @@ class Product {
       quantity: json['quantity'] as int? ?? 0,
     );
   }
+  Product copyWith({
+    String? id,
+    String? name,
+    String? category,
+    int? stock,
+    int? sellingPrice,
+    int? basicPrice,
+    int? quantity,
+  }) {
+    return Product(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      category: category ?? this.category,
+      stock: stock ?? this.stock,
+      sellingPrice: sellingPrice ?? this.sellingPrice,
+      basicPrice: basicPrice ?? this.basicPrice,
+      quantity: quantity ?? this.quantity,
+    );
+  }
 }

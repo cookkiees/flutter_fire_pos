@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/model/product_model.dart';
 
 class ProductProvider extends ChangeNotifier {
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final _productsCollection = FirebaseFirestore.instance.collection('products');
   final _categoriesCollection =
       FirebaseFirestore.instance.collection('categories');
@@ -14,12 +14,6 @@ class ProductProvider extends ChangeNotifier {
   final stockController = TextEditingController();
   final basicController = TextEditingController();
   final sellingController = TextEditingController();
-
-  Stream<List<Product>> getProductStream() {
-    return _productsCollection.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) => Product.fromJson(doc.data())).toList();
-    });
-  }
 
   String _duplicateProductName = '';
   String get duplicateProductName => _duplicateProductName;
@@ -96,8 +90,10 @@ class ProductProvider extends ChangeNotifier {
         sellingPrice: int.tryParse(sellingController.text) ?? 0,
         basicPrice: int.tryParse(basicController.text) ?? 0,
       );
-
+      final String? userEmail = FirebaseAuth.instance.currentUser?.email;
       final QuerySnapshot duplicateSnapshot = await _productsCollection
+          .doc(userEmail)
+          .collection('list products')
           .where('name', isEqualTo: product.name)
           .limit(1)
           .get();
@@ -108,7 +104,10 @@ class ProductProvider extends ChangeNotifier {
         return;
       }
 
-      final QuerySnapshot snapshot = await _productsCollection.get();
+      final QuerySnapshot snapshot = await _productsCollection
+          .doc(userEmail)
+          .collection('list products')
+          .get();
       final categoryDocs = snapshot.docs;
 
       int maxId = 0;
@@ -120,8 +119,10 @@ class ProductProvider extends ChangeNotifier {
       }
       final newId = (maxId + 1).toString();
 
-      final DocumentReference documentReference =
-          _productsCollection.doc(newId);
+      final DocumentReference documentReference = _productsCollection
+          .doc(userEmail)
+          .collection('list products')
+          .doc(newId);
       await documentReference.set(product.toJson());
       await documentReference.update({'id': newId});
       final Product newProduct = Product(
@@ -150,7 +151,12 @@ class ProductProvider extends ChangeNotifier {
 
   Future<List<String>> getCategories() async {
     try {
-      final QuerySnapshot snapshot = await _categoriesCollection.get();
+      final String? userEmail = FirebaseAuth.instance.currentUser?.email;
+
+      final QuerySnapshot snapshot = await _categoriesCollection
+          .doc(userEmail)
+          .collection('list category')
+          .get();
       final List<String> newCategories = snapshot.docs
           .map((doc) => doc.data() as Map<String, dynamic>?)
           .where((data) => data != null && data.containsKey('categoryName'))
@@ -204,7 +210,12 @@ class ProductProvider extends ChangeNotifier {
 
   Future<List<Product>> getProducts() async {
     try {
-      final QuerySnapshot snapshot = await _productsCollection.get();
+      final String? userEmail = FirebaseAuth.instance.currentUser?.email;
+
+      final QuerySnapshot snapshot = await _productsCollection
+          .doc(userEmail)
+          .collection('list products')
+          .get();
       final List<Product> newProducts = snapshot.docs
           .map((doc) => doc.data() as Map<String, dynamic>?)
           .where((data) => data != null && data.containsKey('id'))
@@ -242,7 +253,12 @@ class ProductProvider extends ChangeNotifier {
     }
 
     try {
-      final QuerySnapshot snapshot = await _categoriesCollection.get();
+      final String? userEmail = FirebaseAuth.instance.currentUser?.email;
+
+      final QuerySnapshot snapshot = await _categoriesCollection
+          .doc(userEmail)
+          .collection('list category')
+          .get();
       final categoryDocs = snapshot.docs;
 
       int maxId = 0;
@@ -254,7 +270,10 @@ class ProductProvider extends ChangeNotifier {
       }
       final newId = (maxId + 1).toString();
 
-      final categoryDocument = _categoriesCollection.doc(newId);
+      final categoryDocument = _categoriesCollection
+          .doc(userEmail)
+          .collection('list category')
+          .doc(newId);
 
       await categoryDocument.set({
         'categoryName': categoryName,
@@ -267,6 +286,64 @@ class ProductProvider extends ChangeNotifier {
     } catch (error) {
       // Handle error
       debugPrint('Error adding category: $error');
+    }
+  }
+
+  Future<void> deleteProduct(String productId) async {
+    try {
+      final String? userEmail = FirebaseAuth.instance.currentUser?.email;
+      final DocumentReference documentReference = _productsCollection
+          .doc(userEmail)
+          .collection('list products')
+          .doc(productId);
+      await documentReference.delete();
+
+      _products.removeWhere((product) => product.id == productId);
+      getFilteredProducts();
+      notifyListeners();
+    } catch (error) {
+      // Handle error
+      debugPrint('Error deleting product: $error');
+    }
+  }
+
+  Future<void> updateStock(
+      String productId, TextEditingController quantityController) async {
+    try {
+      final String? userEmail = FirebaseAuth.instance.currentUser?.email;
+
+      final DocumentReference documentReference = _productsCollection
+          .doc(userEmail)
+          .collection('list products')
+          .doc(productId);
+
+      // Retrieve the current stock of the product
+      final DocumentSnapshot snapshot = await documentReference.get();
+      final int currentStock = snapshot['stock'] as int;
+
+      // Get the updated stock quantity from the quantityController
+      final int quantity = int.tryParse(quantityController.text) ?? 0;
+
+      // Calculate the new stock value
+      final int updatedStock = currentStock + quantity;
+
+      // Update the stock of the product
+      await documentReference.update({'stock': updatedStock});
+
+      // Update the stock in the local list of products
+      final index = _products.indexWhere((product) => product.id == productId);
+      if (index != -1) {
+        final Product updatedProduct =
+            _products[index].copyWith(stock: updatedStock);
+        _products[index] = updatedProduct;
+      }
+
+      getFilteredProducts();
+      Get.back();
+      notifyListeners();
+    } catch (error) {
+      // Handle error
+      debugPrint('Error updating stock: $error');
     }
   }
 }

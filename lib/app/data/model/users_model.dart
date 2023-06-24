@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class UserModel {
   final String uid;
   final String email;
@@ -39,5 +41,14 @@ class UserModel {
       'lastSignIn': lastSignIn?.toIso8601String(),
       'creationTime': creationTime?.toIso8601String(),
     };
+  }
+
+  String toJsonString() {
+    return json.encode(toJson());
+  }
+
+  factory UserModel.fromJsonString(String jsonString) {
+    Map<String, dynamic> jsonMap = json.decode(jsonString);
+    return UserModel.fromJson(jsonMap);
   }
 }

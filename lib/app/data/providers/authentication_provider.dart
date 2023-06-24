@@ -1,15 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_pos/app/routes/app_routes.dart';
+import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
 
+import '../local_storage/local_storage_util.dart';
 import '../model/users_model.dart';
+import 'product_provider.dart';
 
 class AuthenticationProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  late Stream<QuerySnapshot> userDataStream;
 
   final CollectionReference _usersCollection =
       FirebaseFirestore.instance.collection('users');
@@ -41,8 +47,26 @@ class AuthenticationProvider extends ChangeNotifier {
     return '';
   }
 
+  Future<UserModel?> getUserData() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.email)
+          .get();
+      if (userSnapshot.exists) {
+        UserModel userData =
+            UserModel.fromJson(userSnapshot.data() as Map<String, dynamic>);
+        return userData;
+      }
+    }
+    return null;
+  }
+
+  UserModel? userModel;
+
   Future<void> loginWithEmailPassword() async {
-    validate(); // Validate fields before proceeding
+    validate();
 
     if (_errorEmail.isEmpty && _errorPassword.isEmpty) {
       String email = emailController.text.trim();
@@ -54,6 +78,8 @@ class AuthenticationProvider extends ChangeNotifier {
           password: password,
         );
         User? user = userCredential.user;
+        ProductProvider productProvider =
+            Provider.of<ProductProvider>(Get.context!, listen: false);
 
         if (user != null) {
           DateTime? lastSignIn = user.metadata.lastSignInTime;
@@ -68,10 +94,16 @@ class AuthenticationProvider extends ChangeNotifier {
             creationTime: creationTime,
           );
 
-          await _usersCollection.doc(user.uid).set(customUser.toJson());
+          await _usersCollection.doc(user.email).set(customUser.toJson());
+          userModel = await getUserData();
+          String token = await user.getIdToken();
+          LocalStorageUtil.saveUserToken(token);
+          await productProvider.getProducts();
+          await productProvider.getCategories();
+
+          Navigator.pushReplacementNamed(Get.context!, AppRoutes.home);
         }
       } catch (error) {
-        // Handle error saat login dengan email dan kata sandi
         debugPrint('Error logging in with email and password: $error');
       }
     }
@@ -82,6 +114,7 @@ class AuthenticationProvider extends ChangeNotifier {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       final GoogleSignInAuthentication googleAuth =
           await googleUser!.authentication;
+
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -90,6 +123,8 @@ class AuthenticationProvider extends ChangeNotifier {
       UserCredential userCredential =
           await _auth.signInWithCredential(credential);
       User? user = userCredential.user;
+      ProductProvider productProvider =
+          Provider.of<ProductProvider>(Get.context!, listen: false);
 
       if (user != null) {
         DateTime? lastSignIn = user.metadata.lastSignInTime;
@@ -104,10 +139,14 @@ class AuthenticationProvider extends ChangeNotifier {
           creationTime: creationTime,
         );
 
-        await _usersCollection.doc(user.uid).set(customUser.toJson());
+        await _usersCollection.doc(user.email).set(customUser.toJson());
+        userModel = await getUserData();
+        LocalStorageUtil.saveUserToken(googleAuth.accessToken!);
+        await productProvider.getProducts();
+        await productProvider.getCategories();
+        Navigator.pushReplacementNamed(Get.context!, AppRoutes.home);
       }
     } catch (error) {
-      // Handle error saat login dengan akun Google
       debugPrint('Error logging in with Google: $error');
     }
   }

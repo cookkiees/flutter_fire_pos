@@ -9,11 +9,14 @@ class CustomElevatedButtonWidget extends StatelessWidget {
     this.onPressed,
     this.title = '',
     this.radius = 32,
+    this.fontSize = 14,
+    this.fontWeight = FontWeight.w600,
   });
 
   final void Function()? onPressed;
   final String title;
-
+  final double fontSize;
+  final FontWeight fontWeight;
   final double radius;
 
   @override
@@ -21,7 +24,7 @@ class CustomElevatedButtonWidget extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: MyColors.purple,
+        backgroundColor: MyColors.primary,
         minimumSize: const Size(double.infinity, 50),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
@@ -30,9 +33,9 @@ class CustomElevatedButtonWidget extends StatelessWidget {
       child: Text(
         title,
         style: MyTextTheme.defaultStyle(
-          color: Colors.black,
-          fontWeight: FontWeight.w600,
-          fontSize: 16,
+          color: Colors.white,
+          fontWeight: fontWeight,
+          fontSize: fontSize,
         ),
       ),
     );

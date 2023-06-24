@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_fire_pos/app/data/providers/authentication_provider.dart';
+import 'package:flutter_fire_pos/app/data/providers/table_provider.dart';
+import 'package:flutter_fire_pos/app/data/providers/report_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../modules/responsive/responsive_main_provider.dart';
@@ -19,25 +21,36 @@ class AppProviders extends StatelessWidget {
           lazy: false,
           create: (context) => ResponsiveMainProvider(),
         ),
-        ChangeNotifierProvider<AuthenticationProvider>(
+        ChangeNotifierProvider<TableProvider>(
           lazy: false,
-          create: (context) => AuthenticationProvider(),
+          create: (context) => TableProvider(),
         ),
+        ChangeNotifierProvider<ReportProvider>(
+          lazy: false,
+          create: (context) => ReportProvider(),
+        ),
+        ChangeNotifierProvider<AuthenticationProvider>(
+            lazy: false,
+            create: (context) {
+              final auth = AuthenticationProvider();
+
+              return auth;
+            }),
         ChangeNotifierProvider<CartProvider>(
           lazy: false,
           create: (context) {
-            final provider = CartProvider();
-            provider.fetchCartItems();
-            return provider;
+            final cart = CartProvider();
+            cart.fetchCartItems();
+            return cart;
           },
         ),
         ChangeNotifierProvider<ProductProvider>(
           lazy: false,
           create: (context) {
-            final provider = ProductProvider();
-            provider.getCategories();
-            provider.getProducts();
-            return provider;
+            final product = ProductProvider();
+            product.getCategories();
+            product.getProducts();
+            return product;
           },
         ),
       ],
