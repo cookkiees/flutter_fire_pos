@@ -14,13 +14,14 @@ class CustomSearchWidget extends StatelessWidget {
       style: MyTextTheme.defaultStyle(),
       cursorColor: MyColors.primary,
       decoration: InputDecoration(
+        contentPadding: const EdgeInsets.only(top: 16),
         filled: true,
         fillColor: MyColors.grey[150],
         hintText: 'Start Searching',
         prefixIcon: const Icon(
           color: MyColors.primary,
           Icons.search_outlined,
-          size: 28.0,
+          size: 26.0,
         ),
         enabledBorder: OutlineInputBorder(
           borderSide: BorderSide.none,

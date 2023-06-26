@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_fire_pos/app/routes/app_routes.dart';
+import 'package:flutter_fire_pos/app/data/providers/consumer_provider.dart';
+import 'package:flutter_fire_pos/app/data/providers/report_provider.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 
+import '../../routes/app_routes.dart';
 import '../local_storage/local_storage_util.dart';
 import '../model/users_model.dart';
 import 'product_provider.dart';
@@ -13,15 +15,38 @@ import 'product_provider.dart';
 class AuthenticationProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  late UserCredential userCredential;
+  final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   late Stream<QuerySnapshot> userDataStream;
+
+  bool _value = false;
+
+  bool get value => _value;
+
+  void setValue(bool newValue) {
+    _value = newValue;
+    notifyListeners();
+  }
+
+  int _tabIndex = 0;
+
+  int get tabIndex => _tabIndex;
+
+  void changeTabIndex(index) {
+    _tabIndex = index;
+    resetFields();
+    notifyListeners();
+  }
 
   final CollectionReference _usersCollection =
       FirebaseFirestore.instance.collection('users');
 
   String _errorEmail = '';
   String get errorEmail => _errorEmail;
+  String _errorName = '';
+  String get errorName => _errorName;
 
   String _errorPassword = '';
   String get errorPasword => _errorPassword;
@@ -33,7 +58,14 @@ class AuthenticationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void validate() {
+  void validateRegister() {
+    _errorEmail = _validateField(emailController, 'Email');
+    _errorPassword = _validateField(passwordController, 'Pasword');
+    _errorName = _validateField(nameController, 'Name');
+    notifyListeners();
+  }
+
+  void validateLogin() {
     _errorEmail = _validateField(emailController, 'Email');
     _errorPassword = _validateField(passwordController, 'Pasword');
     notifyListeners();
@@ -55,9 +87,10 @@ class AuthenticationProvider extends ChangeNotifier {
           .doc(currentUser.email)
           .get();
       if (userSnapshot.exists) {
-        UserModel userData =
+        userModel =
             UserModel.fromJson(userSnapshot.data() as Map<String, dynamic>);
-        return userData;
+
+        return userModel;
       }
     }
     return null;
@@ -66,20 +99,24 @@ class AuthenticationProvider extends ChangeNotifier {
   UserModel? userModel;
 
   Future<void> loginWithEmailPassword() async {
-    validate();
+    validateLogin();
 
     if (_errorEmail.isEmpty && _errorPassword.isEmpty) {
       String email = emailController.text.trim();
       String password = passwordController.text.trim();
 
       try {
-        UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        userCredential = await _auth.signInWithEmailAndPassword(
           email: email,
           password: password,
         );
         User? user = userCredential.user;
         ProductProvider productProvider =
             Provider.of<ProductProvider>(Get.context!, listen: false);
+        ConsumersProvider consumerProvider =
+            Provider.of<ConsumersProvider>(Get.context!, listen: false);
+        ReportProvider reportProvider =
+            Provider.of<ReportProvider>(Get.context!, listen: false);
 
         if (user != null) {
           DateTime? lastSignIn = user.metadata.lastSignInTime;
@@ -88,19 +125,23 @@ class AuthenticationProvider extends ChangeNotifier {
           UserModel customUser = UserModel(
             uid: user.uid,
             email: user.email!,
-            displayName: user.displayName!,
-            photoURL: user.photoURL!,
+            displayName: user.displayName ?? user.email!,
+            photoURL: "",
             lastSignIn: lastSignIn,
             creationTime: creationTime,
           );
 
           await _usersCollection.doc(user.email).set(customUser.toJson());
-          userModel = await getUserData();
+
           String token = await user.getIdToken();
           LocalStorageUtil.saveUserToken(token);
+
+          await getUserData();
+          await consumerProvider.getConsumers();
           await productProvider.getProducts();
           await productProvider.getCategories();
-
+          await reportProvider.getTransactionHistory();
+          notifyListeners();
           Navigator.pushReplacementNamed(Get.context!, AppRoutes.home);
         }
       } catch (error) {
@@ -120,11 +161,15 @@ class AuthenticationProvider extends ChangeNotifier {
         idToken: googleAuth.idToken,
       );
 
-      UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
+      userCredential = await _auth.signInWithCredential(credential);
       User? user = userCredential.user;
       ProductProvider productProvider =
           Provider.of<ProductProvider>(Get.context!, listen: false);
+
+      ConsumersProvider consumerProvider =
+          Provider.of<ConsumersProvider>(Get.context!, listen: false);
+      ReportProvider reportProvider =
+          Provider.of<ReportProvider>(Get.context!, listen: false);
 
       if (user != null) {
         DateTime? lastSignIn = user.metadata.lastSignInTime;
@@ -140,14 +185,61 @@ class AuthenticationProvider extends ChangeNotifier {
         );
 
         await _usersCollection.doc(user.email).set(customUser.toJson());
-        userModel = await getUserData();
+
         LocalStorageUtil.saveUserToken(googleAuth.accessToken!);
+
+        await getUserData();
+        await consumerProvider.getConsumers();
         await productProvider.getProducts();
         await productProvider.getCategories();
+        await reportProvider.getTransactionHistory();
+        notifyListeners();
         Navigator.pushReplacementNamed(Get.context!, AppRoutes.home);
       }
     } catch (error) {
       debugPrint('Error logging in with Google: $error');
+    }
+  }
+
+  Future<void> registerWithEmailPassword() async {
+    validateRegister();
+    if (_errorEmail.isEmpty && _errorPassword.isEmpty && _errorName.isEmpty) {
+      String email = emailController.text.trim();
+      String password = passwordController.text.trim();
+      String name = nameController.text.trim();
+
+      try {
+        userCredential = await _auth.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        User? user = userCredential.user;
+
+        if (user != null) {
+          DateTime? lastSignIn = user.metadata.lastSignInTime;
+          DateTime? creationTime = user.metadata.creationTime;
+
+          UserModel customUser = UserModel(
+            uid: user.uid,
+            email: user.email!,
+            displayName: name,
+            photoURL: '',
+            lastSignIn: lastSignIn,
+            creationTime: creationTime,
+          );
+
+          await _usersCollection.doc(user.email).set(customUser.toJson());
+
+          String token = await user.getIdToken();
+          LocalStorageUtil.saveUserToken(token);
+          await getUserData();
+
+          notifyListeners();
+          Navigator.pushReplacementNamed(Get.context!, AppRoutes.home);
+        }
+      } catch (error) {
+        debugPrint('Error registering with email and password: $error');
+      }
     }
   }
 }

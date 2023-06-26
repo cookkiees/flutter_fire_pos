@@ -93,7 +93,7 @@ class AnimatedCartListState extends State<AnimatedCartList>
                   ],
                 ),
                 trailing: Text(
-                  "\$ ${product.sellingPrice}",
+                  "Rp ${product.sellingPrice}",
                   style: MyTextTheme.defaultStyle(),
                 ),
               ),

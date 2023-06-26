@@ -3,46 +3,55 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../model/product_model.dart';
-
-class ReportModel {
-  final int? id;
-  final List<Product> products;
-  final double profit;
-  final DateTime timestamp;
-
-  ReportModel({
-    required this.id,
-    required this.products,
-    required this.profit,
-    required this.timestamp,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'products': products.map((product) => product.toJson()).toList(),
-      'profit': profit,
-      'timestamp': Timestamp.fromDate(timestamp),
-    };
-  }
-}
+import '../model/report_model.dart';
 
 class ReportProvider with ChangeNotifier {
   final _reportCollection = FirebaseFirestore.instance.collection('reports');
+  final _chartCollection = FirebaseFirestore.instance.collection('charts');
+
   List<ReportModel> transactionHistory = [];
   double dailyProfit = 0;
   double weeklyProfit = 0;
   double monthlyProfit = 0;
   double yearlyProfit = 0;
 
+  Future<void> saveMonthlyChartToFirebase() async {
+    final String? userEmail = FirebaseAuth.instance.currentUser?.email;
+
+    final List<double> monthlyProfits = List<double>.generate(
+        12, (index) => getMonthlyProfitByIndex(index + 1));
+
+    final DocumentReference chartDoc =
+        _chartCollection.doc(userEmail).collection('chart_data').doc('monthly');
+
+    await chartDoc.set({'monthly_profits': monthlyProfits});
+  }
+
+  Future<List<double>> getMonthlyChartFromFirebase() async {
+    final String? userEmail = FirebaseAuth.instance.currentUser?.email;
+
+    final DocumentSnapshot chartSnapshot = await _chartCollection
+        .doc(userEmail)
+        .collection('chart_data')
+        .doc('monthly')
+        .get();
+
+    final data = chartSnapshot.data() as Map<String, dynamic>;
+    final List<double> monthlyProfits =
+        List<double>.from(data['monthly_profits']);
+
+    return monthlyProfits;
+  }
+
   Future<void> addTransaction(List<Product> products, double profit) async {
     final String? userEmail = FirebaseAuth.instance.currentUser?.email;
     final QuerySnapshot snapshot =
         await _reportCollection.doc(userEmail).collection('list reports').get();
 
-    final categoryDocs = snapshot.docs;
+    final reportsDocs = snapshot.docs;
 
     int maxId = 0;
-    for (var doc in categoryDocs) {
+    for (var doc in reportsDocs) {
       final id = int.tryParse(
           (doc.data() as Map<String, dynamic>)['id']?.toString() ?? '');
       if (id != null && id > maxId) {
@@ -50,12 +59,16 @@ class ReportProvider with ChangeNotifier {
       }
     }
 
-    final newId = (maxId + 1);
+    var newId = (maxId + 1);
+    while (transactionHistory.any((transaction) => transaction.id == newId)) {
+      newId++;
+    }
 
     final DocumentReference documentReference = _reportCollection
         .doc(userEmail)
         .collection('list transaction')
         .doc("$newId");
+
     await documentReference.set(
       ReportModel(
         id: newId,
@@ -75,9 +88,51 @@ class ReportProvider with ChangeNotifier {
     calculateWeeklyProfit();
     calculateMonthlyProfit();
     calculateYearlyProfit();
+    await saveMonthlyChartToFirebase();
     debugPrint("$dailyProfit");
 
     notifyListeners();
+  }
+
+  Future<void> getTransactionHistory() async {
+    final String? userEmail = FirebaseAuth.instance.currentUser?.email;
+    final QuerySnapshot snapshot = await _reportCollection
+        .doc(userEmail)
+        .collection('list transaction')
+        .get();
+
+    transactionHistory = snapshot.docs.map((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      return ReportModel.fromJson(data);
+    }).toList();
+
+    calculateDailyProfit();
+    calculateWeeklyProfit();
+    calculateMonthlyProfit();
+    calculateYearlyProfit();
+
+    notifyListeners();
+  }
+
+  double getWeeklyProfitByIndex(int index) {
+    if (index < 0 || index >= transactionHistory.length) {
+      return 0.0;
+    }
+
+    DateTime now = DateTime.now();
+    DateTime startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
+
+    List<ReportModel> weeklyTransactions = transactionHistory
+        .where((transaction) =>
+            transaction.timestamp.isAfter(startOfWeek) &&
+            transaction.timestamp.isBefore(endOfWeek))
+        .toList();
+
+    double weeklyProfit = weeklyTransactions.fold(0.0,
+        (previousValue, transaction) => previousValue + transaction.profit);
+
+    return weeklyProfit;
   }
 
   double calculateProfit(List<Product> products) {
@@ -87,6 +142,7 @@ class ReportProvider with ChangeNotifier {
           product.quantity) as double;
       totalProfit += profitPerItem;
     }
+    notifyListeners();
     return totalProfit;
   }
 
@@ -94,24 +150,23 @@ class ReportProvider with ChangeNotifier {
     DateTime now = DateTime.now();
     DateTime today = DateTime(now.year, now.month, now.day);
 
-    dailyProfit = 0;
-    for (ReportModel transaction in transactionHistory) {
-      if (transaction.timestamp.isAfter(today)) {
-        dailyProfit += transaction.profit;
-      }
-    }
+    dailyProfit = transactionHistory
+        .where((transaction) => transaction.timestamp.isAfter(today))
+        .fold(0,
+            (previousValue, transaction) => previousValue + transaction.profit);
+    notifyListeners();
   }
 
   void calculateWeeklyProfit() {
     DateTime now = DateTime.now();
     DateTime startOfWeek = now.subtract(Duration(days: now.weekday - 1));
 
-    weeklyProfit = 0;
-    for (ReportModel transaction in transactionHistory) {
-      if (transaction.timestamp.isAfter(startOfWeek)) {
-        weeklyProfit += transaction.profit;
-      }
-    }
+    weeklyProfit = transactionHistory
+        .where((transaction) => transaction.timestamp.isAfter(startOfWeek))
+        .fold(0,
+            (previousValue, transaction) => previousValue + transaction.profit);
+
+    notifyListeners();
   }
 
   void calculateMonthlyProfit() {
@@ -126,6 +181,24 @@ class ReportProvider with ChangeNotifier {
     }
   }
 
+  double getMonthlyProfitByIndex(int index) {
+    if (index < 1 || index > 12) {
+      return 0;
+    }
+    DateTime now = DateTime.now();
+    DateTime startOfMonth = DateTime(now.year, index, 1);
+    DateTime endOfMonth = DateTime(now.year, index + 1, 0);
+
+    double monthlyProfit = transactionHistory
+        .where((transaction) =>
+            transaction.timestamp.isAfter(startOfMonth) &&
+            transaction.timestamp.isBefore(endOfMonth))
+        .fold(0,
+            (previousValue, transaction) => previousValue + transaction.profit);
+
+    return monthlyProfit;
+  }
+
   void calculateYearlyProfit() {
     DateTime now = DateTime.now();
     DateTime startOfYear = DateTime(now.year, 1, 1);
@@ -136,5 +209,20 @@ class ReportProvider with ChangeNotifier {
         yearlyProfit += transaction.profit;
       }
     }
+  }
+
+  double getYearlyProfit() {
+    DateTime now = DateTime.now();
+    DateTime startOfYear = DateTime(now.year, 1, 1);
+    DateTime endOfYear = DateTime(now.year, 12, 31);
+
+    double yearlyProfit = transactionHistory
+        .where((transaction) =>
+            transaction.timestamp.isAfter(startOfYear) &&
+            transaction.timestamp.isBefore(endOfYear))
+        .fold(0,
+            (previousValue, transaction) => previousValue + transaction.profit);
+
+    return yearlyProfit;
   }
 }

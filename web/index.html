@@ -15,7 +15,7 @@
     the `--base-href` argument provided to `flutter build`.
   -->
   <base href="$FLUTTER_BASE_HREF">
-  <meta name="google-signin-client_id" content="96304314724-es26ne5cj8rd4hfp276qu9kvsjn7b2ht.apps.googleusercontent.com">
+  <meta name="google-signin-client_id" content="96304314724-v1ibna95tu3do82t9sbb751i17ah8utr.apps.googleusercontent.com">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
@@ -32,15 +32,12 @@
   <title>flutter_fire_pos</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+
   <script>
     // The value below is injected by flutter build, do not touch.
-    var serviceWorkerVersion = null;
-  </script>
-  <!-- This script adds the flutter initialization JS code -->
-  <script src="flutter.js" defer></script>
-</head>
-<body>
-  <script>
+    var serviceWorkerVersion = "3348084949";
+    
     window.addEventListener('load', function(ev) {
       // Download main.dart.js
       _flutter.loader.loadEntrypoint({
@@ -53,7 +50,17 @@
           });
         }
       });
-    });
+    });   
+    // Fungsi yang akan dipanggil saat Google Sign-In berhasil
+    function onSignIn(googleUser) {
+      var idToken = googleUser.getAuthResponse().id_token;
+      console.log(idToken);
+      // Lakukan sesuatu dengan idToken di sini
+      // Anda dapat mengirimkan token ini ke server Anda untuk verifikasi atau digunakan dalam operasi lainnya.
+    }
   </script>
+</head>
+<body>
+  <script src="main.dart.js" type="application/javascript"></script>
 </body>
 </html>

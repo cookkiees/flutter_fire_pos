@@ -38,7 +38,7 @@ class CustomTextFormFieldWidget extends StatelessWidget {
         labelText: labelText,
         errorText: errorText,
         suffixIcon: suffixIcon,
-        errorStyle: MyTextTheme.defaultStyle(color: Colors.red),
+        errorStyle: MyTextTheme.defaultStyle(color: Colors.red, fontSize: 12),
         fillColor: MyColors.primary,
         labelStyle: MyTextTheme.defaultStyle(color: styleColor),
         enabledBorder: OutlineInputBorder(

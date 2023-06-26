@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_fire_pos/app/theme/utils/my_colors.dart';
 
 import '../theme/text_theme.dart';
+import '../theme/utils/my_colors.dart';
 
 class CustomElevatedButtonWidget extends StatelessWidget {
   const CustomElevatedButtonWidget({

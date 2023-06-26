@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_fire_pos/app/modules/products_management/products_management_page.dart';
-import 'package:flutter_fire_pos/app/theme/text_theme.dart';
+
 import 'package:provider/provider.dart';
 
+import '../../data/providers/authentication_provider.dart';
+import '../../theme/text_theme.dart';
+import '../accounting/accounting_page.dart';
+import '../products_management/products_management_page.dart';
+import '../sales/views/cart_views.dart';
 import 'responsive_layout.dart';
 import '../../components/custom_search_widget.dart';
 import '../../theme/utils/my_colors.dart';
@@ -15,18 +19,46 @@ class ResponsiveMainPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsiveMainProvider = context.watch<ResponsiveMainProvider>();
+    final mainProvider = context.watch<ResponsiveMainProvider>();
 
     return Scaffold(
+      key: mainProvider.scaffoldKey,
       backgroundColor: MyColors.grey[200],
-      body: ResponsiveLayout(
-        phone: Container(),
-        tablet: Container(),
-        largeTablet: Container(),
-        computer: Row(
+      body: const ResponsiveLayout(
+        phone: ResponsiveHomePage(),
+        tablet: ResponsiveHomePage(),
+        largeTablet: ResponsiveHomePage(),
+        computer: ResponsiveHomePage(),
+      ),
+      drawer: const MenuBarWidget(
+        width: 300,
+        useFlexible: false,
+      ),
+      endDrawer: const CartViews(),
+    );
+  }
+}
+
+class ResponsiveHomePage extends StatelessWidget {
+  const ResponsiveHomePage({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final mainProvider = context.watch<ResponsiveMainProvider>();
+
+    return LayoutBuilder(
+      builder: ((context, constraints) {
+        var isLargeTablet = ResponsiveLayout.isLargeTablet(context);
+        var isTablet = ResponsiveLayout.isTablet(context);
+        var isPhone = ResponsiveLayout.isPhone(context);
+        return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const MenuBarWidget(),
+            constraints.maxWidth <= 1160 || isLargeTablet || isTablet
+                ? const SizedBox.shrink()
+                : const MenuBarWidget(),
             Expanded(
               flex: 5,
               child: SizedBox(
@@ -47,67 +79,104 @@ class ResponsiveMainPage extends StatelessWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const SizedBox(
-                                  width: 360,
-                                  child: CustomSearchWidget(),
-                                ),
-                                Flexible(
-                                  child: Container(
-                                    color: MyColors.white,
-                                    padding: const EdgeInsets.only(right: 24),
-                                    child: SizedBox(
-                                      width: 336,
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              IconButton(
-                                                onPressed: () {},
-                                                icon: const Icon(
-                                                  Icons.email_outlined,
-                                                  color: MyColors.grey,
-                                                ),
+                                Row(
+                                  children: [
+                                    constraints.maxWidth <= 1160 ||
+                                            isLargeTablet ||
+                                            isTablet
+                                        ? InkWell(
+                                            onTap: () {
+                                              mainProvider.openDrawer();
+                                            },
+                                            child: Container(
+                                              height: 40,
+                                              width: 40,
+                                              padding: const EdgeInsets.all(8),
+                                              margin: const EdgeInsets.only(
+                                                  right: 24),
+                                              decoration: BoxDecoration(
+                                                color: MyColors.grey[200],
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
                                               ),
-                                              IconButton(
-                                                onPressed: () {},
-                                                icon: const Icon(
-                                                  Icons.notifications_outlined,
-                                                  color: MyColors.grey,
-                                                ),
+                                              child: const Icon(
+                                                Icons.subject_outlined,
+                                                size: 24,
+                                                color: MyColors.primary,
                                               ),
-                                            ],
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Row(
-                                            children: [
-                                              Text(
-                                                'Username',
-                                                style: MyTextTheme.defaultStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 16),
-                                              const CircleAvatar(
-                                                radius: 20.0,
-                                                backgroundColor:
-                                                    MyColors.primary,
-                                              ),
-                                              IconButton(
-                                                onPressed: () {},
-                                                icon: const Icon(
-                                                  Icons.arrow_drop_down,
-                                                  color: MyColors.grey,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
+                                            ),
+                                          )
+                                        : const SizedBox.shrink(),
+                                    const SizedBox(
+                                      width: 324,
+                                      height: 46,
+                                      child: CustomSearchWidget(),
                                     ),
-                                  ),
+                                  ],
                                 ),
+                                constraints.maxWidth <= 677 ||
+                                        isTablet ||
+                                        isPhone
+                                    ? InkWell(
+                                        onTap: () {
+                                          mainProvider.openEndDrawer();
+                                        },
+                                        child: Container(
+                                          height: 40,
+                                          width: 40,
+                                          padding: const EdgeInsets.all(8),
+                                          margin: const EdgeInsets.symmetric(
+                                              horizontal: 24),
+                                          decoration: BoxDecoration(
+                                            color: MyColors.grey[200],
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          child: const Icon(
+                                            Icons.shopping_cart_outlined,
+                                            size: 20,
+                                            color: MyColors.primary,
+                                          ),
+                                        ),
+                                      )
+                                    : Flexible(
+                                        child: Container(
+                                          color: MyColors.white,
+                                          padding:
+                                              const EdgeInsets.only(right: 24),
+                                          child: SizedBox(
+                                            width: 336,
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    IconButton(
+                                                      onPressed: () {},
+                                                      icon: const Icon(
+                                                        Icons.email_outlined,
+                                                        color: MyColors.grey,
+                                                      ),
+                                                    ),
+                                                    IconButton(
+                                                      onPressed: () {},
+                                                      icon: const Icon(
+                                                        Icons
+                                                            .notifications_outlined,
+                                                        color: MyColors.grey,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(width: 16),
+                                                const DisplayUserWidget(),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                               ],
                             ),
                           ),
@@ -116,11 +185,23 @@ class ResponsiveMainPage extends StatelessWidget {
                     ),
                     Expanded(
                       child: IndexedStack(
-                        index: responsiveMainProvider.tabIndex,
-                        children: [
-                          const SalesPage(),
-                          const ProductManagementPage(),
-                          Container(),
+                        index: mainProvider.tabIndex,
+                        children: const [
+                          SizedBox(
+                            width: double.infinity,
+                            height: double.infinity,
+                            child: SalesPage(),
+                          ),
+                          SizedBox(
+                            width: double.infinity,
+                            height: double.infinity,
+                            child: ProductManagementPage(),
+                          ),
+                          SizedBox(
+                            width: double.infinity,
+                            height: double.infinity,
+                            child: AccountingPage(),
+                          ),
                         ],
                       ),
                     )
@@ -129,8 +210,60 @@ class ResponsiveMainPage extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
+        );
+      }),
+    );
+  }
+}
+
+class DisplayUserWidget extends StatelessWidget {
+  const DisplayUserWidget({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthenticationProvider>(
+      builder: (context, authProvider, child) {
+        return Row(
+          children: [
+            Text(
+              '${authProvider.userModel?.displayName ?? ''} ',
+              style: MyTextTheme.defaultStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 16),
+            CircleAvatar(
+              radius: 20.0,
+              backgroundColor: MyColors.primary,
+              child: authProvider.userModel?.photoURL == null
+                  ? const SizedBox.shrink()
+                  : Image.network(
+                      authProvider.userModel!.photoURL,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (BuildContext context, Widget child,
+                          ImageChunkEvent? loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const CircularProgressIndicator(); // Tampilkan indikator loading saat gambar sedang dimuat
+                      },
+                      errorBuilder: (BuildContext context, Object error,
+                          StackTrace? stackTrace) {
+                        return const Icon(Icons
+                            .error); // Tampilkan ikon error jika terjadi kesalahan saat memuat gambar
+                      },
+                    ),
+            ),
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(
+                Icons.arrow_drop_down,
+                color: MyColors.grey,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

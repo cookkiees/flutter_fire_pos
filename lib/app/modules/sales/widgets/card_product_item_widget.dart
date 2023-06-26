@@ -111,7 +111,7 @@ class _CardProductWidgetState extends State<CardProductWidget>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "\$${widget.product.sellingPrice}",
+                    "Rp ${widget.product.sellingPrice}",
                     style: MyTextTheme.defaultStyle(
                       fontSize: 16,
                       color: Colors.grey,

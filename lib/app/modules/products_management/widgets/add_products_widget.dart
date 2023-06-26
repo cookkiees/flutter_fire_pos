@@ -20,7 +20,7 @@ class AddProductWidget extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Add new menu',
+            'Add new products',
             style: MyTextTheme.defaultStyle(
               color: Colors.black,
               fontSize: 18,
@@ -136,7 +136,8 @@ class AddProductWidget extends StatelessWidget {
                         errorText: productProvider.errorBasicPrice,
                         onChanged: (value) {},
                         inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d+\.?\d*$')),
                         ],
                       ),
                     ),
@@ -149,7 +150,8 @@ class AddProductWidget extends StatelessWidget {
                         errorText: productProvider.errorSellingPrice,
                         onChanged: (value) {},
                         inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d+\.?\d*$')),
                         ],
                       ),
                     ),

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_fire_pos/app/data/providers/authentication_provider.dart';
-import 'package:flutter_fire_pos/app/data/providers/table_provider.dart';
-import 'package:flutter_fire_pos/app/data/providers/report_provider.dart';
+
 import 'package:provider/provider.dart';
 
 import '../../modules/responsive/responsive_main_provider.dart';
+import 'authentication_provider.dart';
 import 'card_provider.dart';
+import 'consumer_provider.dart';
 import 'product_provider.dart';
+import 'report_provider.dart';
+import 'table_provider.dart';
 
 class AppProviders extends StatelessWidget {
   const AppProviders({Key? key, required this.child}) : super(key: key);
@@ -25,15 +27,26 @@ class AppProviders extends StatelessWidget {
           lazy: false,
           create: (context) => TableProvider(),
         ),
-        ChangeNotifierProvider<ReportProvider>(
+        ChangeNotifierProvider<ConsumersProvider>(
           lazy: false,
-          create: (context) => ReportProvider(),
+          create: (context) {
+            final consumers = ConsumersProvider();
+            consumers.getConsumers();
+            return consumers;
+          },
         ),
+        ChangeNotifierProvider<ReportProvider>(
+            lazy: false,
+            create: (context) {
+              final report = ReportProvider();
+              report.getTransactionHistory();
+              return report;
+            }),
         ChangeNotifierProvider<AuthenticationProvider>(
             lazy: false,
             create: (context) {
               final auth = AuthenticationProvider();
-
+              auth.getUserData();
               return auth;
             }),
         ChangeNotifierProvider<CartProvider>(

@@ -7,8 +7,8 @@ import '../../../theme/text_theme.dart';
 import '../../../theme/utils/my_colors.dart';
 import 'add_products_widget.dart';
 
-class HeaderProductManagementWidget extends StatelessWidget {
-  const HeaderProductManagementWidget({
+class HeaderTableProductWidget extends StatelessWidget {
+  const HeaderTableProductWidget({
     super.key,
   });
 
@@ -17,7 +17,6 @@ class HeaderProductManagementWidget extends StatelessWidget {
     return Consumer2<ProductProvider, TableProvider>(
       builder: (context, productProvider, tableProvider, child) {
         return Row(
-          mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
@@ -30,8 +29,9 @@ class HeaderProductManagementWidget extends StatelessWidget {
             ),
             Row(
               children: [
-                Text('Entries per page', style: MyTextTheme.defaultStyle()),
-                const SizedBox(width: 16),
+                Text('Entries per page',
+                    style: MyTextTheme.defaultStyle(fontSize: 12)),
+                const SizedBox(width: 8),
                 SizedBox(
                   width: 50,
                   child: PopupMenuButton<int>(
@@ -54,7 +54,7 @@ class HeaderProductManagementWidget extends StatelessWidget {
                       ),
                     ],
                     onSelected: (value) =>
-                        tableProvider.changeItemsPerPage(value),
+                        tableProvider.changeItemsPerPageProduct(value),
                     child: Container(
                       height: 40,
                       alignment: Alignment.center,
@@ -66,7 +66,7 @@ class HeaderProductManagementWidget extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '${tableProvider.itemsPerPage}',
+                            '${tableProvider.itemsPerPageProduct}',
                             style: MyTextTheme.defaultStyle(),
                           ),
                           Icon(
@@ -94,7 +94,10 @@ class HeaderProductManagementWidget extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         )),
-                    icon: const Icon(Icons.add),
+                    icon: const Icon(
+                      Icons.add,
+                      size: 18,
+                    ),
                     label: Text(
                       'Add Products',
                       style: MyTextTheme.defaultStyle(

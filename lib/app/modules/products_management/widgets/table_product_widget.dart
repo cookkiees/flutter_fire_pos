@@ -18,8 +18,8 @@ class TableProductWidget extends StatelessWidget {
     return Consumer2<ProductProvider, TableProvider>(
       builder: (context, productsProvider, tableProvider, child) {
         List<Product> products = productsProvider.products;
-        int itemsPerPage = tableProvider.itemsPerPage;
-        int currentPage = tableProvider.currentPage;
+        int itemsPerPage = tableProvider.itemsPerPageProduct;
+        int currentPage = tableProvider.currentPageProduct;
 
         int startIndex = currentPage * itemsPerPage;
         int endIndex = startIndex + itemsPerPage;
@@ -28,220 +28,225 @@ class TableProductWidget extends StatelessWidget {
         }
         List<Product> pageProducts = products.sublist(startIndex, endIndex);
 
-        return Flexible(
-          child: Table(
-            border: TableBorder.all(width: 0.2),
-            columnWidths: const {
-              0: FlexColumnWidth(0.3),
-              1: FlexColumnWidth(2),
-              2: FlexColumnWidth(2),
-              3: FlexColumnWidth(1),
-              4: FlexColumnWidth(2),
-              5: FlexColumnWidth(2),
-              6: FlexColumnWidth(0.8),
-            },
-            children: [
-              TableRow(
-                children: [
-                  tableCellWidget(
-                    title: 'ID',
-                    fontWeight: FontWeight.w600,
-                    onTap: () => tableProvider.sortProducts('ID'),
-                  ),
-                  headerTableCellWidget(
-                    title: 'Product Name',
-                    onTap: () => tableProvider.sortProducts('Product Name'),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  headerTableCellWidget(
-                    title: 'Category',
-                    onTap: () => tableProvider.sortProducts('Category'),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  headerTableCellWidget(
-                    title: 'Stock',
-                    onTap: () => tableProvider.sortProducts('Stock'),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  headerTableCellWidget(
-                    title: 'Selling Price',
-                    onTap: () => tableProvider.sortProducts('Selling Price'),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  headerTableCellWidget(
-                    title: 'Basic Price',
-                    onTap: () => tableProvider.sortProducts('Basic Price'),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  tableCellWidget(
-                    title: 'Action',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ],
-              ),
-              ...pageProducts.map((product) {
-                return TableRow(
+        return Flex(
+          direction: Axis.vertical,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Table(
+              border: TableBorder.all(width: 0.2),
+              columnWidths: const {
+                0: FlexColumnWidth(0.3),
+                1: FlexColumnWidth(2),
+                2: FlexColumnWidth(2),
+                3: FlexColumnWidth(1),
+                4: FlexColumnWidth(2),
+                5: FlexColumnWidth(2),
+                6: FlexColumnWidth(0.8),
+              },
+              children: [
+                TableRow(
                   children: [
-                    tableCellWidget(title: '${product.id}'),
                     tableCellWidget(
-                      title: product.name,
-                      alignment: Alignment.centerLeft,
-                      left: 12,
+                      title: 'ID',
+                      fontWeight: FontWeight.w600,
+                      onTap: () => tableProvider.sortProducts('ID'),
+                    ),
+                    headerTableCellWidget(
+                      title: 'Product Name',
+                      onTap: () => tableProvider.sortProducts('Product Name'),
+                      fontWeight: FontWeight.w600,
+                    ),
+                    headerTableCellWidget(
+                      title: 'Category',
+                      onTap: () => tableProvider.sortProducts('Category'),
+                      fontWeight: FontWeight.w600,
+                    ),
+                    headerTableCellWidget(
+                      title: 'Stock',
+                      onTap: () => tableProvider.sortProducts('Stock'),
+                      fontWeight: FontWeight.w600,
+                    ),
+                    headerTableCellWidget(
+                      title: 'Selling Price',
+                      onTap: () => tableProvider.sortProducts('Selling Price'),
+                      fontWeight: FontWeight.w600,
+                    ),
+                    headerTableCellWidget(
+                      title: 'Basic Price',
+                      onTap: () => tableProvider.sortProducts('Basic Price'),
+                      fontWeight: FontWeight.w600,
                     ),
                     tableCellWidget(
-                      title: product.category,
-                      alignment: Alignment.centerLeft,
-                      left: 12,
-                    ),
-                    tableCellWidget(
-                      title: product.stock.toString(),
-                      alignment: Alignment.centerLeft,
-                      left: 12,
-                    ),
-                    tableCellWidget(
-                      title: "\$ ${product.sellingPrice}",
-                      alignment: Alignment.centerLeft,
-                      left: 12,
-                    ),
-                    tableCellWidget(
-                      title: "\$ ${product.basicPrice}",
-                      alignment: Alignment.centerLeft,
-                      left: 12,
-                    ),
-                    TableCell(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                size: 18,
-                                color: MyColors.grey,
-                              ),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: Text(
-                                        'Delete Product',
-                                        style: MyTextTheme.defaultStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 15,
-                                        ),
-                                      ),
-                                      content: Text(
-                                        'Are you sure you want to delete this product?',
-                                        style: MyTextTheme.defaultStyle(),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          child: Text(
-                                            'Cancel',
-                                            style: MyTextTheme.defaultStyle(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text(
-                                            'Delete',
-                                            style: MyTextTheme.defaultStyle(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                            productsProvider
-                                                .deleteProduct("${product.id}");
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                          Flexible(
-                            child: IconButton(
-                              tooltip: 'Add Stock',
-                              icon: const Icon(
-                                Icons.add,
-                                size: 16,
-                                color: MyColors.grey,
-                              ),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    TextEditingController quantityController =
-                                        TextEditingController();
-
-                                    return AlertDialog(
-                                      title: Text(
-                                        'Update Stock',
-                                        style: MyTextTheme.defaultStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      content: CustomTextFormFieldWidget(
-                                        labelText: 'Stock',
-                                        controller: quantityController,
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter
-                                              .digitsOnly,
-                                        ],
-                                      ),
-                                      actions: [
-                                        SizedBox(
-                                          width: 80,
-                                          height: 36,
-                                          child: CustomElevatedButtonWidget(
-                                            title: 'Cancel',
-                                            fontWeight: FontWeight.w300,
-                                            fontSize: 13,
-                                            radius: 8,
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          width: 80,
-                                          height: 36,
-                                          child: CustomElevatedButtonWidget(
-                                            title: 'Update',
-                                            fontWeight: FontWeight.w300,
-                                            fontSize: 13,
-                                            radius: 8,
-                                            onPressed: () async {
-                                              await productsProvider
-                                                  .updateStock("${product.id}",
-                                                      quantityController);
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                      title: 'Action',
+                      fontWeight: FontWeight.w600,
                     ),
                   ],
-                );
-              }).toList(),
-            ],
-          ),
+                ),
+                ...pageProducts.map((product) {
+                  return TableRow(
+                    children: [
+                      tableCellWidget(title: '${product.id}'),
+                      tableCellWidget(
+                        title: product.name,
+                        alignment: Alignment.centerLeft,
+                        left: 12,
+                      ),
+                      tableCellWidget(
+                        title: product.category,
+                        alignment: Alignment.centerLeft,
+                        left: 12,
+                      ),
+                      tableCellWidget(
+                        title: product.stock.toString(),
+                        alignment: Alignment.centerLeft,
+                        left: 12,
+                      ),
+                      tableCellWidget(
+                        title: "Rp ${product.sellingPrice}",
+                        alignment: Alignment.centerLeft,
+                        left: 12,
+                      ),
+                      tableCellWidget(
+                        title: "Rp ${product.basicPrice}",
+                        alignment: Alignment.centerLeft,
+                        left: 12,
+                      ),
+                      TableCell(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  size: 18,
+                                  color: MyColors.grey,
+                                ),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text(
+                                          'Delete Product',
+                                          style: MyTextTheme.defaultStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                        content: Text(
+                                          'Are you sure you want to delete this product?',
+                                          style: MyTextTheme.defaultStyle(),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            child: Text(
+                                              'Cancel',
+                                              style: MyTextTheme.defaultStyle(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                          TextButton(
+                                            child: Text(
+                                              'Delete',
+                                              style: MyTextTheme.defaultStyle(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                              productsProvider.deleteProduct(
+                                                  "${product.id}");
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                            Flexible(
+                              child: IconButton(
+                                tooltip: 'Add Stock',
+                                icon: const Icon(
+                                  Icons.add,
+                                  size: 16,
+                                  color: MyColors.grey,
+                                ),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      TextEditingController quantityController =
+                                          TextEditingController();
+
+                                      return AlertDialog(
+                                        title: Text(
+                                          'Update Stock',
+                                          style: MyTextTheme.defaultStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        content: CustomTextFormFieldWidget(
+                                          labelText: 'Stock',
+                                          controller: quantityController,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly,
+                                          ],
+                                        ),
+                                        actions: [
+                                          SizedBox(
+                                            width: 80,
+                                            height: 36,
+                                            child: CustomElevatedButtonWidget(
+                                              title: 'Cancel',
+                                              fontWeight: FontWeight.w300,
+                                              fontSize: 13,
+                                              radius: 8,
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                              },
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: 80,
+                                            height: 36,
+                                            child: CustomElevatedButtonWidget(
+                                              title: 'Update',
+                                              fontWeight: FontWeight.w300,
+                                              fontSize: 13,
+                                              radius: 8,
+                                              onPressed: () async {
+                                                await productsProvider
+                                                    .updateStock(
+                                                        "${product.id}",
+                                                        quantityController);
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ],
+            ),
+          ],
         );
       },
     );
@@ -287,19 +292,23 @@ class TableProductWidget extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              title,
-              style: MyTextTheme.defaultStyle(
-                color: Colors.black,
-                fontWeight: fontWeight,
+            Flexible(
+              child: Text(
+                title,
+                style: MyTextTheme.defaultStyle(
+                  color: Colors.black,
+                  fontWeight: fontWeight,
+                ),
               ),
             ),
-            InkWell(
-              onTap: onTap,
-              child: const Icon(
-                Icons.import_export_outlined,
-                size: 18.0,
-                color: MyColors.grey,
+            Flexible(
+              child: InkWell(
+                onTap: onTap,
+                child: const Icon(
+                  Icons.import_export_outlined,
+                  size: 18.0,
+                  color: MyColors.grey,
+                ),
               ),
             )
           ],
