@@ -41,8 +41,6 @@ class CartProvider extends ChangeNotifier {
       double totalProfit = reportProvider.calculateProfit(cartItems);
       await reportProvider.addTransaction(cartItems, totalProfit);
       notifyListeners();
-
-      await clearCart();
     } catch (error) {
       debugPrint('Error during checkout: $error');
     }
@@ -65,27 +63,6 @@ class CartProvider extends ChangeNotifier {
       debugPrint('Error fetching cart items: $error');
     }
   }
-
-  // Future<void> getProduct(String productId) async {
-  //   try {
-  //     final String? userEmail = FirebaseAuth.instance.currentUser?.email;
-  //     DocumentSnapshot productSnapshot = await productCollection
-  //         .doc(userEmail)
-  //         .collection(listproducts)
-  //         .doc(productId)
-  //         .get();
-
-  //     if (productSnapshot.exists) {
-  //       product =
-  //           Product.fromJson(productSnapshot.data() as Map<String, dynamic>);
-  //       notifyListeners();
-  //     } else {
-  //       debugPrint('Product not found');
-  //     }
-  //   } catch (error) {
-  //     debugPrint('Error adding product to cart: $error');
-  //   }
-  // }
 
   Future<void> addToCart(String productId) async {
     try {

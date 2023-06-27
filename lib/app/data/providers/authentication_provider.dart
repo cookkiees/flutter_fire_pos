@@ -141,6 +141,7 @@ class AuthenticationProvider extends ChangeNotifier {
           await productProvider.getProducts();
           await productProvider.getCategories();
           await reportProvider.getTransactionHistory();
+          await reportProvider.getMonthlyChartFromFirebase();
           notifyListeners();
           Navigator.pushReplacementNamed(Get.context!, AppRoutes.home);
         }

@@ -10,7 +10,7 @@ import 'app/routes/app_routes.dart';
 import 'app/data/firebase_options.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Inisialisasi Flutter binding
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

@@ -123,10 +123,12 @@ class CartViews extends StatelessWidget {
                         ],
                       ),
                       CustomElevatedButtonWidget(
-                        title: 'Checkout',
-                        radius: 8,
-                        onPressed: () => cartProvider.checkout(),
-                      )
+                          title: 'Checkout',
+                          radius: 8,
+                          onPressed: () async {
+                            await cartProvider.checkout();
+                            // showStruckDialog(cartProvider);
+                          })
                     ],
                   ),
                 ),

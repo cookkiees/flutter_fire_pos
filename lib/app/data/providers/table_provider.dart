@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
 import 'product_provider.dart';
+import 'report_provider.dart';
 
 class TableProvider extends ChangeNotifier {
   String _sortColumnName = ''; // Kolom yang digunakan untuk pengurutan
@@ -199,6 +200,101 @@ class TableProvider extends ChangeNotifier {
     if (!_isAscending) {
       consumersProvider.listConsumers ==
           consumersProvider.listConsumers.reversed.toList();
+    }
+
+    notifyListeners();
+  }
+
+  int _itemsPerPageReport = 5;
+
+  int get itemsPerPageReport => _itemsPerPageReport;
+
+  void changeItemsPerPageReport(int value) {
+    _itemsPerPageReport = value;
+    _currentPageReport = 0;
+    notifyListeners();
+  }
+
+  int _currentPageReport = 0;
+
+  int get currentPageReport => _currentPageReport;
+
+  void setCurrentPageReport(int page) {
+    _currentPageReport = page;
+    notifyListeners();
+  }
+
+  void goToPageReport(int page) {
+    ReportProvider reportProvider =
+        Provider.of<ReportProvider>(Get.context!, listen: false);
+    int totalPages =
+        ((reportProvider.transactionHistory.length - 1) / _itemsPerPageReport)
+            .ceil();
+    if (page >= 0 && page < totalPages) {
+      setCurrentPageReport(page);
+    }
+    notifyListeners();
+  }
+
+  int get totalPagesReport {
+    ReportProvider reportProvider =
+        Provider.of<ReportProvider>(Get.context!, listen: false);
+
+    int totalItems = reportProvider.transactionHistory.length;
+    int totalPages = (totalItems / _itemsPerPageReport).ceil();
+
+    return totalPages;
+  }
+
+  void sortReports(String columnName) {
+    // Fungsi untuk mengurutkan produk berdasarkan kolom yang dipilih
+    if (_sortColumnName == columnName) {
+      // Jika kolom yang sama di-klik lagi, ubah urutan
+      _isAscending = !_isAscending;
+    } else {
+      // Jika kolom yang berbeda di-klik, urutan akan naik
+      _sortColumnName = columnName;
+      _isAscending = true;
+    }
+
+    ReportProvider reportProvider =
+        Provider.of<ReportProvider>(Get.context!, listen: false);
+
+    switch (_sortColumnName) {
+      case 'ID':
+        reportProvider.transactionHistory.sort((a, b) {
+          final int? idA = int.tryParse("${a.id}");
+          final int? idB = int.tryParse("${b.id}");
+
+          if (idA != null && idB != null) {
+            return idA.compareTo(idB);
+          } else {
+            return 0;
+          }
+        });
+        break;
+      case 'Profit':
+        reportProvider.transactionHistory
+            .sort((a, b) => a.profit.compareTo(b.profit));
+        break;
+      case 'Date':
+        reportProvider.transactionHistory
+            .sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        break;
+      case 'Time':
+        reportProvider.transactionHistory
+            .sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        break;
+
+      default:
+        // Jika kolom tidak dikenali, tidak melakukan pengurutan
+        break;
+    }
+
+    // Jika urutan turun, balikkan daftar produk
+    if (!_isAscending) {
+      reportProvider.transactionHistory ==
+          reportProvider.transactionHistory.reversed.toList();
     }
 
     notifyListeners();

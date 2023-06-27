@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_pos/app/components/show_dialog_struk_widget.dart';
+import 'package:flutter_fire_pos/app/data/providers/card_provider.dart';
+import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 
 import '../model/product_model.dart';
 import '../model/report_model.dart';
@@ -9,16 +13,19 @@ class ReportProvider with ChangeNotifier {
   final _reportCollection = FirebaseFirestore.instance.collection('reports');
   final _chartCollection = FirebaseFirestore.instance.collection('charts');
 
-  List<ReportModel> transactionHistory = [];
+  late List<ReportModel> _transactionHistory = [];
+  List<ReportModel> get transactionHistory => _transactionHistory;
   double dailyProfit = 0;
   double weeklyProfit = 0;
   double monthlyProfit = 0;
   double yearlyProfit = 0;
+  List<double> _monthlyProfits = [];
+  List<double> get monthlyProfits => _monthlyProfits;
 
   Future<void> saveMonthlyChartToFirebase() async {
     final String? userEmail = FirebaseAuth.instance.currentUser?.email;
 
-    final List<double> monthlyProfits = List<double>.generate(
+    _monthlyProfits = List<double>.generate(
         12, (index) => getMonthlyProfitByIndex(index + 1));
 
     final DocumentReference chartDoc =
@@ -37,8 +44,7 @@ class ReportProvider with ChangeNotifier {
         .get();
 
     final data = chartSnapshot.data() as Map<String, dynamic>;
-    final List<double> monthlyProfits =
-        List<double>.from(data['monthly_profits']);
+    _monthlyProfits = List<double>.from(data['monthly_profits']);
 
     return monthlyProfits;
   }
@@ -49,6 +55,8 @@ class ReportProvider with ChangeNotifier {
         await _reportCollection.doc(userEmail).collection('list reports').get();
 
     final reportsDocs = snapshot.docs;
+    CartProvider cartProvider =
+        Provider.of<CartProvider>(Get.context!, listen: false);
 
     int maxId = 0;
     for (var doc in reportsDocs) {
@@ -60,7 +68,7 @@ class ReportProvider with ChangeNotifier {
     }
 
     var newId = (maxId + 1);
-    while (transactionHistory.any((transaction) => transaction.id == newId)) {
+    while (_transactionHistory.any((transaction) => transaction.id == newId)) {
       newId++;
     }
 
@@ -78,19 +86,20 @@ class ReportProvider with ChangeNotifier {
       ).toJson(),
     );
 
-    transactionHistory.add(ReportModel(
+    _transactionHistory.add(ReportModel(
       id: newId,
       products: products,
       profit: profit,
       timestamp: DateTime.now(),
     ));
+
     calculateDailyProfit();
     calculateWeeklyProfit();
     calculateMonthlyProfit();
     calculateYearlyProfit();
     await saveMonthlyChartToFirebase();
+    showStruckDialog(cartProvider, newId);
     debugPrint("$dailyProfit");
-
     notifyListeners();
   }
 
@@ -101,7 +110,7 @@ class ReportProvider with ChangeNotifier {
         .collection('list transaction')
         .get();
 
-    transactionHistory = snapshot.docs.map((doc) {
+    _transactionHistory = snapshot.docs.map((doc) {
       final data = doc.data() as Map<String, dynamic>;
       return ReportModel.fromJson(data);
     }).toList();
@@ -115,7 +124,7 @@ class ReportProvider with ChangeNotifier {
   }
 
   double getWeeklyProfitByIndex(int index) {
-    if (index < 0 || index >= transactionHistory.length) {
+    if (index < 0 || index >= _transactionHistory.length) {
       return 0.0;
     }
 
@@ -123,7 +132,7 @@ class ReportProvider with ChangeNotifier {
     DateTime startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     DateTime endOfWeek = startOfWeek.add(const Duration(days: 6));
 
-    List<ReportModel> weeklyTransactions = transactionHistory
+    List<ReportModel> weeklyTransactions = _transactionHistory
         .where((transaction) =>
             transaction.timestamp.isAfter(startOfWeek) &&
             transaction.timestamp.isBefore(endOfWeek))
@@ -150,7 +159,7 @@ class ReportProvider with ChangeNotifier {
     DateTime now = DateTime.now();
     DateTime today = DateTime(now.year, now.month, now.day);
 
-    dailyProfit = transactionHistory
+    dailyProfit = _transactionHistory
         .where((transaction) => transaction.timestamp.isAfter(today))
         .fold(0,
             (previousValue, transaction) => previousValue + transaction.profit);
@@ -161,7 +170,7 @@ class ReportProvider with ChangeNotifier {
     DateTime now = DateTime.now();
     DateTime startOfWeek = now.subtract(Duration(days: now.weekday - 1));
 
-    weeklyProfit = transactionHistory
+    weeklyProfit = _transactionHistory
         .where((transaction) => transaction.timestamp.isAfter(startOfWeek))
         .fold(0,
             (previousValue, transaction) => previousValue + transaction.profit);
@@ -174,7 +183,7 @@ class ReportProvider with ChangeNotifier {
     DateTime startOfMonth = DateTime(now.year, now.month, 1);
 
     monthlyProfit = 0;
-    for (ReportModel transaction in transactionHistory) {
+    for (ReportModel transaction in _transactionHistory) {
       if (transaction.timestamp.isAfter(startOfMonth)) {
         monthlyProfit += transaction.profit;
       }
@@ -189,7 +198,7 @@ class ReportProvider with ChangeNotifier {
     DateTime startOfMonth = DateTime(now.year, index, 1);
     DateTime endOfMonth = DateTime(now.year, index + 1, 0);
 
-    double monthlyProfit = transactionHistory
+    double monthlyProfit = _transactionHistory
         .where((transaction) =>
             transaction.timestamp.isAfter(startOfMonth) &&
             transaction.timestamp.isBefore(endOfMonth))
@@ -204,7 +213,7 @@ class ReportProvider with ChangeNotifier {
     DateTime startOfYear = DateTime(now.year, 1, 1);
 
     yearlyProfit = 0;
-    for (ReportModel transaction in transactionHistory) {
+    for (ReportModel transaction in _transactionHistory) {
       if (transaction.timestamp.isAfter(startOfYear)) {
         yearlyProfit += transaction.profit;
       }
@@ -216,7 +225,7 @@ class ReportProvider with ChangeNotifier {
     DateTime startOfYear = DateTime(now.year, 1, 1);
     DateTime endOfYear = DateTime(now.year, 12, 31);
 
-    double yearlyProfit = transactionHistory
+    double yearlyProfit = _transactionHistory
         .where((transaction) =>
             transaction.timestamp.isAfter(startOfYear) &&
             transaction.timestamp.isBefore(endOfYear))

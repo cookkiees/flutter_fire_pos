@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/providers/report_provider.dart';
 import '../../theme/text_theme.dart';
 import '../responsive/responsive_layout.dart';
 import 'widgets/accounting_bar_chart_widget.dart';
+import 'widgets/box_report_widget.dart';
+import 'widgets/footer_table_transaction_history_widget.dart';
+import 'widgets/header_table_transaction_history_widget.dart';
+import 'widgets/transaction_history_widget.dart';
 
 class AccountingPage extends StatelessWidget {
   const AccountingPage({super.key});
@@ -13,10 +18,10 @@ class AccountingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        var isTablet = ResponsiveLayout.isTablet(context);
-        var isPhone = ResponsiveLayout.isPhone(context);
         return Consumer<ReportProvider>(
-          builder: (context, reports, _) {
+          builder: (_, reports, __) {
+            var isTablet = ResponsiveLayout.isTablet(context);
+            var isPhone = ResponsiveLayout.isPhone(context);
             var title = [
               "Sales today",
               "Total orders",
@@ -37,6 +42,7 @@ class AccountingPage extends StatelessWidget {
             ];
             return ListView(
               shrinkWrap: true,
+              clipBehavior: Clip.antiAliasWithSaveLayer,
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,29 +95,39 @@ class AccountingPage extends StatelessWidget {
                       child: Container(
                         height: 400,
                         padding: const EdgeInsets.only(top: 24),
-                        child: GridView.builder(
-                          gridDelegate:
-                              const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 400,
-                            mainAxisExtent: 176,
-                            mainAxisSpacing: 24,
-                            crossAxisSpacing: 24,
+                        child: AnimationLimiter(
+                          child: GridView.builder(
+                            gridDelegate:
+                                const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 400,
+                              mainAxisExtent: 176,
+                              mainAxisSpacing: 24,
+                              crossAxisSpacing: 24,
+                            ),
+                            itemCount: title.length,
+                            shrinkWrap: true,
+                            padding: constraints.maxWidth <= 900 ||
+                                    isTablet ||
+                                    isPhone
+                                ? const EdgeInsets.symmetric(horizontal: 24)
+                                : const EdgeInsets.only(right: 24),
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemBuilder: (BuildContext context, int index) {
+                              return AnimationConfiguration.staggeredGrid(
+                                position: index,
+                                duration: const Duration(milliseconds: 500),
+                                columnCount: 2,
+                                child: ScaleAnimation(
+                                  child: BoxReportsWidget(
+                                    icon: icon[index],
+                                    title: title[index],
+                                    value: value[index],
+                                    subtitle: '* Update every order success',
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                          itemCount: title.length,
-                          shrinkWrap: true,
-                          padding:
-                              constraints.maxWidth <= 900 || isTablet || isPhone
-                                  ? const EdgeInsets.symmetric(horizontal: 24)
-                                  : const EdgeInsets.only(right: 16),
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemBuilder: (BuildContext context, int index) {
-                            return BoxReportsWidget(
-                              icon: icon[index],
-                              title: title[index],
-                              value: value[index],
-                              subtitle: '* Update every order success',
-                            );
-                          },
                         ),
                       ),
                     ),
@@ -158,69 +174,41 @@ class AccountingPage extends StatelessWidget {
                         ),
                       )
                     : const SizedBox.shrink(),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(
+                    right: 24,
+                    top: 24,
+                    left: 24,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const HeaderTableTransactionWidget(),
+                      reports.transactionHistory.isEmpty
+                          ? const SizedBox.shrink()
+                          : const SizedBox(height: 16),
+                      reports.transactionHistory.isEmpty
+                          ? const SizedBox.shrink()
+                          : const TableTransactionWidget(),
+                      const SizedBox(height: 16),
+                      reports.transactionHistory.isEmpty
+                          ? const SizedBox.shrink()
+                          : const FooterTableTransactionWidget(),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 24),
               ],
             );
           },
         );
       },
-    );
-  }
-}
-
-class BoxReportsWidget extends StatelessWidget {
-  const BoxReportsWidget({
-    super.key,
-    this.title = "",
-    this.value = "",
-    this.subtitle = "",
-    required this.icon,
-  });
-  final String title;
-  final String value;
-  final String subtitle;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: MyTextTheme.defaultStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-              Icon(icon, size: 38)
-            ],
-          ),
-          Text(
-            value,
-            style: MyTextTheme.defaultStyle(),
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            subtitle,
-            style: MyTextTheme.defaultStyle(),
-            overflow: TextOverflow.ellipsis,
-          )
-        ],
-      ),
     );
   }
 }

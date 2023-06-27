@@ -40,6 +40,7 @@ class AppProviders extends StatelessWidget {
             create: (context) {
               final report = ReportProvider();
               report.getTransactionHistory();
+              report.getMonthlyChartFromFirebase();
               return report;
             }),
         ChangeNotifierProvider<AuthenticationProvider>(
