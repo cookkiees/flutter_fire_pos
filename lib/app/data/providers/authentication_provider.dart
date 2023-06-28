@@ -191,6 +191,8 @@ class AuthenticationProvider extends ChangeNotifier {
         LocalStorageUtil.saveUserToken(googleAuth.accessToken!);
 
         await getUserData();
+        productProvider.products.clear();
+        consumerProvider.listConsumers.clear();
         await consumerProvider.getConsumers();
         await productProvider.getProducts();
         await productProvider.getCategories();
@@ -217,6 +219,14 @@ class AuthenticationProvider extends ChangeNotifier {
         );
         User? user = userCredential.user;
 
+        ProductProvider productProvider =
+            Provider.of<ProductProvider>(Get.context!, listen: false);
+
+        ConsumersProvider consumerProvider =
+            Provider.of<ConsumersProvider>(Get.context!, listen: false);
+        ReportProvider reportProvider =
+            Provider.of<ReportProvider>(Get.context!, listen: false);
+
         if (user != null) {
           DateTime? lastSignIn = user.metadata.lastSignInTime;
           DateTime? creationTime = user.metadata.creationTime;
@@ -235,6 +245,15 @@ class AuthenticationProvider extends ChangeNotifier {
           String token = await user.getIdToken();
           LocalStorageUtil.saveUserToken(token);
           await getUserData();
+          productProvider.products.clear();
+          consumerProvider.listConsumers.clear();
+
+          await consumerProvider.getConsumers();
+          await productProvider.getProducts();
+          await productProvider.getCategories();
+          await reportProvider.getTransactionHistory();
+
+          notifyListeners();
 
           notifyListeners();
           Navigator.pushReplacementNamed(Get.context!, AppRoutes.home);
@@ -243,5 +262,22 @@ class AuthenticationProvider extends ChangeNotifier {
         debugPrint('Error registering with email and password: $error');
       }
     }
+  }
+
+  Future<void> logout() async {
+    ProductProvider productProvider =
+        Provider.of<ProductProvider>(Get.context!, listen: false);
+    ConsumersProvider consumerProvider =
+        Provider.of<ConsumersProvider>(Get.context!, listen: false);
+
+    productProvider.products.clear();
+    consumerProvider.listConsumers.clear();
+
+    await _auth.signOut();
+    _googleSignIn.signOut();
+    LocalStorageUtil.deleteUserToken();
+    userModel = null;
+    notifyListeners();
+    Navigator.pushReplacementNamed(Get.context!, AppRoutes.initial);
   }
 }

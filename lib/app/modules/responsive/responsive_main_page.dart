@@ -240,27 +240,40 @@ class DisplayUserWidget extends StatelessWidget {
               child: authProvider.userModel?.photoURL == null
                   ? const SizedBox.shrink()
                   : Image.network(
-                      authProvider.userModel!.photoURL,
+                      "${authProvider.userModel?.photoURL}",
                       fit: BoxFit.cover,
                       loadingBuilder: (BuildContext context, Widget child,
                           ImageChunkEvent? loadingProgress) {
                         if (loadingProgress == null) return child;
-                        return const CircularProgressIndicator(); // Tampilkan indikator loading saat gambar sedang dimuat
+                        return const CircularProgressIndicator();
                       },
                       errorBuilder: (BuildContext context, Object error,
                           StackTrace? stackTrace) {
-                        return const Icon(Icons
-                            .error); // Tampilkan ikon error jika terjadi kesalahan saat memuat gambar
+                        return const Icon(Icons.error);
                       },
                     ),
             ),
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(
+            PopupMenuButton<String>(
+              itemBuilder: (BuildContext context) => [
+                PopupMenuItem(
+                  value: 'logout',
+                  height: 40,
+                  child: Text(
+                    'Logout',
+                    style: MyTextTheme.defaultStyle(),
+                  ),
+                ),
+              ],
+              onSelected: (String value) {
+                if (value == 'logout') {
+                  authProvider.logout();
+                }
+              },
+              child: const Icon(
                 Icons.arrow_drop_down,
                 color: MyColors.grey,
               ),
-            ),
+            )
           ],
         );
       },

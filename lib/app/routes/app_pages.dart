@@ -8,12 +8,12 @@ abstract class AppPages {
   static const initial = AppRoutes.initial;
   static final pages = [
     GetPage(
+      name: AppRoutes.initial,
+      page: () => const AuthenticationPage(),
+    ),
+    GetPage(
       name: AppRoutes.home,
       page: () => const ResponsiveMainPage(),
     ),
-    GetPage(
-      name: AppRoutes.initial,
-      page: () => const AuthenticationPage(),
-    )
   ];
 }

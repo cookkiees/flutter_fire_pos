@@ -1,5 +1,4 @@
 abstract class AppRoutes {
-  static const initial = '/';
+  static const initial = '/authentication';
   static const home = '/home';
-  static const authentication = '/authentication';
 }
