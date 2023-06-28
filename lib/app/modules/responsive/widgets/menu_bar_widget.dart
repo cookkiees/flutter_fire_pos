@@ -39,7 +39,7 @@ class MenuBarWidget extends StatelessWidget {
           ...[
             "Sales",
             "Products",
-            "Accounting",
+            "Reports",
           ].asMap().entries.map((entry) {
             final index = entry.key;
             final title = entry.value;

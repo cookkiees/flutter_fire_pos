@@ -13,17 +13,66 @@ void showStruckDialog(CartProvider cartProvider, int transactionId) {
     barrierDismissible: false,
     builder: (BuildContext context) {
       return AlertDialog(
-        title: Text(
-          'ID: $transactionId',
-          style: MyTextTheme.defaultStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 15,
-          ),
-        ),
-        content: SizedBox(
+        title: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Text(
+                'Flutter',
+                style: MyTextTheme.defaultStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 24,
+                ),
+              ),
+              Text(
+                'Address : ',
+                style: MyTextTheme.defaultStyle(
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Text(
+                  '${DateTime.now()}',
+                  style: MyTextTheme.defaultStyle(
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Text(
+                  'ID: $transactionId',
+                  style: MyTextTheme.defaultStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              ListTile(
+                dense: true,
+                leading: Text(
+                  "QTY",
+                  style: MyTextTheme.defaultStyle(),
+                ),
+                title: Text(
+                  "Name",
+                  style: MyTextTheme.defaultStyle(),
+                ),
+                trailing: Text(
+                  "Price",
+                  style: MyTextTheme.defaultStyle(),
+                ),
+              ),
               const Divider(color: MyColors.primary),
               Flexible(
                 child: SizedBox(

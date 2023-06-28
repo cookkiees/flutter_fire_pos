@@ -127,7 +127,6 @@ class CartViews extends StatelessWidget {
                           radius: 8,
                           onPressed: () async {
                             await cartProvider.checkout();
-                            // showStruckDialog(cartProvider);
                           })
                     ],
                   ),

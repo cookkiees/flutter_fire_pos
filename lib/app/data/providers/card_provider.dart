@@ -39,6 +39,7 @@ class CartProvider extends ChangeNotifier {
 
       // Calculate profit and add transaction
       double totalProfit = reportProvider.calculateProfit(cartItems);
+
       await reportProvider.addTransaction(cartItems, totalProfit);
       notifyListeners();
     } catch (error) {
@@ -175,10 +176,12 @@ class CartProvider extends ChangeNotifier {
     return subtotal;
   }
 
+  double tax = 0.0;
+  double discount = 0.0;
   double getTotalPrice() {
     double subtotal = getSubtotal();
-    double discount = subtotal * 0; // Diskon 0%
-    double tax = subtotal * 0.1; // Pajak 10%
+    discount = subtotal * 0; // Diskon 0%
+    tax = subtotal * 0.1; // Pajak 10%
     double totalPrice = subtotal - discount + tax;
     return totalPrice;
   }

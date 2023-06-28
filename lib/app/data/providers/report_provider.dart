@@ -11,7 +11,6 @@ import '../model/report_model.dart';
 
 class ReportProvider with ChangeNotifier {
   final _reportCollection = FirebaseFirestore.instance.collection('reports');
-  final _chartCollection = FirebaseFirestore.instance.collection('charts');
 
   late List<ReportModel> _transactionHistory = [];
   List<ReportModel> get transactionHistory => _transactionHistory;
@@ -19,35 +18,6 @@ class ReportProvider with ChangeNotifier {
   double weeklyProfit = 0;
   double monthlyProfit = 0;
   double yearlyProfit = 0;
-  List<double> _monthlyProfits = [];
-  List<double> get monthlyProfits => _monthlyProfits;
-
-  Future<void> saveMonthlyChartToFirebase() async {
-    final String? userEmail = FirebaseAuth.instance.currentUser?.email;
-
-    _monthlyProfits = List<double>.generate(
-        12, (index) => getMonthlyProfitByIndex(index + 1));
-
-    final DocumentReference chartDoc =
-        _chartCollection.doc(userEmail).collection('chart_data').doc('monthly');
-
-    await chartDoc.set({'monthly_profits': monthlyProfits});
-  }
-
-  Future<List<double>> getMonthlyChartFromFirebase() async {
-    final String? userEmail = FirebaseAuth.instance.currentUser?.email;
-
-    final DocumentSnapshot chartSnapshot = await _chartCollection
-        .doc(userEmail)
-        .collection('chart_data')
-        .doc('monthly')
-        .get();
-
-    final data = chartSnapshot.data() as Map<String, dynamic>;
-    _monthlyProfits = List<double>.from(data['monthly_profits']);
-
-    return monthlyProfits;
-  }
 
   Future<void> addTransaction(List<Product> products, double profit) async {
     final String? userEmail = FirebaseAuth.instance.currentUser?.email;
@@ -82,6 +52,10 @@ class ReportProvider with ChangeNotifier {
         id: newId,
         products: products,
         profit: profit,
+        subtotal: cartProvider.getSubtotal(),
+        tax: cartProvider.tax,
+        discount: cartProvider.discount,
+        total: cartProvider.getTotalPrice(),
         timestamp: DateTime.now(),
       ).toJson(),
     );
@@ -89,6 +63,10 @@ class ReportProvider with ChangeNotifier {
     _transactionHistory.add(ReportModel(
       id: newId,
       products: products,
+      subtotal: cartProvider.getSubtotal(),
+      tax: cartProvider.tax,
+      discount: cartProvider.discount,
+      total: cartProvider.getTotalPrice(),
       profit: profit,
       timestamp: DateTime.now(),
     ));
@@ -97,10 +75,43 @@ class ReportProvider with ChangeNotifier {
     calculateWeeklyProfit();
     calculateMonthlyProfit();
     calculateYearlyProfit();
-    await saveMonthlyChartToFirebase();
+
     showStruckDialog(cartProvider, newId);
+    await getTransactionHistory();
     debugPrint("$dailyProfit");
     notifyListeners();
+  }
+
+  Map<String, int> calculateProductQuantities() {
+    Map<String, int> productQuantities = {};
+
+    for (ReportModel transaction in _transactionHistory) {
+      for (Product product in transaction.products) {
+        if (productQuantities.containsKey(product.name)) {
+          productQuantities[product.name] =
+              (productQuantities[product.name] ?? 0) + product.quantity;
+        } else {
+          productQuantities[product.name] = product.quantity;
+        }
+      }
+    }
+
+    return productQuantities;
+  }
+
+  String findBestSellingProduct() {
+    Map<String, int> productQuantities = calculateProductQuantities();
+    String bestSellingProduct = "";
+    int maxQuantity = 0;
+
+    productQuantities.forEach((productName, quantity) {
+      if (quantity > maxQuantity) {
+        maxQuantity = quantity;
+        bestSellingProduct = productName;
+      }
+    });
+
+    return bestSellingProduct;
   }
 
   Future<void> getTransactionHistory() async {
@@ -144,17 +155,6 @@ class ReportProvider with ChangeNotifier {
     return weeklyProfit;
   }
 
-  double calculateProfit(List<Product> products) {
-    double totalProfit = 0;
-    for (Product product in products) {
-      double profitPerItem = ((product.sellingPrice - product.basicPrice) *
-          product.quantity) as double;
-      totalProfit += profitPerItem;
-    }
-    notifyListeners();
-    return totalProfit;
-  }
-
   void calculateDailyProfit() {
     DateTime now = DateTime.now();
     DateTime today = DateTime(now.year, now.month, now.day);
@@ -163,7 +163,6 @@ class ReportProvider with ChangeNotifier {
         .where((transaction) => transaction.timestamp.isAfter(today))
         .fold(0,
             (previousValue, transaction) => previousValue + transaction.profit);
-    notifyListeners();
   }
 
   void calculateWeeklyProfit() {
@@ -174,8 +173,6 @@ class ReportProvider with ChangeNotifier {
         .where((transaction) => transaction.timestamp.isAfter(startOfWeek))
         .fold(0,
             (previousValue, transaction) => previousValue + transaction.profit);
-
-    notifyListeners();
   }
 
   void calculateMonthlyProfit() {
@@ -233,5 +230,16 @@ class ReportProvider with ChangeNotifier {
             (previousValue, transaction) => previousValue + transaction.profit);
 
     return yearlyProfit;
+  }
+
+  double calculateProfit(List<Product> products) {
+    double totalProfit = 0;
+    for (Product product in products) {
+      double profitPerItem = ((product.sellingPrice - product.basicPrice) *
+          product.quantity) as double;
+      totalProfit += profitPerItem;
+    }
+    notifyListeners();
+    return totalProfit;
   }
 }

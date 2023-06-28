@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_fire_pos/app/modules/reports/reports_page.dart';
 
 import 'package:provider/provider.dart';
 
 import '../../data/providers/authentication_provider.dart';
 import '../../theme/text_theme.dart';
-import '../accounting/accounting_page.dart';
 import '../products_management/products_management_page.dart';
 import '../sales/views/cart_views.dart';
 import 'responsive_layout.dart';
@@ -200,7 +200,7 @@ class ResponsiveHomePage extends StatelessWidget {
                           SizedBox(
                             width: double.infinity,
                             height: double.infinity,
-                            child: AccountingPage(),
+                            child: ReportsPage(),
                           ),
                         ],
                       ),

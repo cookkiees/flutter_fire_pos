@@ -115,6 +115,7 @@ class AuthenticationProvider extends ChangeNotifier {
             Provider.of<ProductProvider>(Get.context!, listen: false);
         ConsumersProvider consumerProvider =
             Provider.of<ConsumersProvider>(Get.context!, listen: false);
+
         ReportProvider reportProvider =
             Provider.of<ReportProvider>(Get.context!, listen: false);
 
@@ -141,7 +142,7 @@ class AuthenticationProvider extends ChangeNotifier {
           await productProvider.getProducts();
           await productProvider.getCategories();
           await reportProvider.getTransactionHistory();
-          await reportProvider.getMonthlyChartFromFirebase();
+
           notifyListeners();
           Navigator.pushReplacementNamed(Get.context!, AppRoutes.home);
         }

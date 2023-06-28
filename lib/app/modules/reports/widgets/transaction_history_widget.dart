@@ -4,6 +4,7 @@ import 'package:flutter_fire_pos/app/data/providers/report_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../components/show_dialog_history_widget.dart';
 import '../../../data/providers/table_provider.dart';
 import '../../../theme/text_theme.dart';
 import '../../../theme/utils/my_colors.dart';
@@ -82,108 +83,12 @@ class TableTransactionWidget extends StatelessWidget {
                         color: MyColors.grey,
                       ),
                       onPressed: () {
-                        showTransactionDetailsDialog(context, transaction);
+                        showDialogHistory(transaction);
                       },
                     ),
                   ),
                 ],
               ),
-          ],
-        );
-      },
-    );
-  }
-
-  void showTransactionDetailsDialog(
-      BuildContext context, ReportModel transaction) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Transaction Details',
-            style: MyTextTheme.defaultStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-            ),
-          ),
-          content: SizedBox(
-            width: 400,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'ID: ${transaction.id}',
-                  style: MyTextTheme.defaultStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Products:',
-                  style: MyTextTheme.defaultStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                for (var product in transaction.products)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 5),
-                      Text(
-                        'Product: ${product.name}',
-                        style: MyTextTheme.defaultStyle(),
-                      ),
-                      Text(
-                        'Quantity: ${product.quantity}',
-                        style: MyTextTheme.defaultStyle(),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                  ),
-                const Divider(
-                  color: Colors.grey,
-                  height: 30,
-                  thickness: 1,
-                ),
-                Text(
-                  'Total Items Sold: ${transaction.products.length}',
-                  style: MyTextTheme.defaultStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Profit: ${transaction.profit.toStringAsFixed(2)}',
-                  style: MyTextTheme.defaultStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Date: ${DateFormat.yMMMd().format(transaction.timestamp)}',
-                  style: MyTextTheme.defaultStyle(),
-                ),
-                Text(
-                  'Time: ${DateFormat.Hm().format(transaction.timestamp)}',
-                  style: MyTextTheme.defaultStyle(),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: Text(
-                'Close',
-                style: MyTextTheme.defaultStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
           ],
         );
       },
